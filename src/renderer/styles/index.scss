@@ -1,0 +1,139 @@
+@import './variables.scss';
+@import './element.scss';
+@import './element-ui.scss';
+@import url('https://fonts.googleapis.com/css?family=B612+Mono:400,700&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import url('../../../node_modules/file-icon-vectors/dist/file-icon-square-o.min.css');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css');
+
+
+body {
+  height: 100%;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-family: 'Source Sans Pro', Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
+  font-size: 14px;
+  background-color: #f2f2f2;
+  margin: 0px !important;
+  color: #000;
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+h1 {
+  font-weight: 300;
+}
+
+.el-button {
+  border: 1px solid $highlight;
+  background: none;
+  color: $highlight;
+  font-weight: 700;
+  font-family: 'Source Sans Pro', Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
+  text-transform: uppercase;
+
+  &--primary:focus {
+    background: $dark;
+    border: 1px solid $highlight;
+    color: $highlight;
+  }
+
+  &:focus {
+    background: $dark;
+    border: 1px solid $highlight;
+    color: $highlight;
+  }
+
+  &:hover {
+    border: 1px solid $highlight;
+    background: $highlight;
+    color: $dark;
+  }
+
+  &.smBtn {
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+}
+
+.secondaryBtn {
+  border: none;
+
+  &:focus {
+    background: none;
+    border: none;
+    color: $highlight;
+  }
+
+  &:hover {
+    border: none;
+    background: none;
+    color: $highlight;
+    text-decoration: underline;
+  }
+}
+
+.el-loading-spinner .path {
+  stroke: $highlight !important;
+}
+
+.el-message-box {
+  background-color: $light;
+
+  &__title {
+    color: $dark;
+  }
+
+  &__content {
+    color: $dark;
+  }
+}
+
+.el-tabs__item {
+  color: $dark;
+
+  &.is-active {
+    color: $highlight;
+  }
+}
+
+.el-tabs__active-bar {
+  background-color: $highlight;
+}
+
+.el-tabs--left .el-tabs__nav-wrap.is-left::after {
+  width: 0px;
+}
+
+.el-tabs__nav-wrap::after {
+  background-color: $light;
+}
+
+.el-popup-parent--hidden .fixed-header {
+  padding-right: 0px !important;
+}
+
+/* fade-transform */
+.fade-transform-leave-active,
+.fade-transform-enter-active {
+  transition: all .5s;
+}
+
+.fade-transform-move {
+  transition: transform 1s;
+}
+
+.fade-transform-enter {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.fade-transform-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
