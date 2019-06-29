@@ -38,13 +38,13 @@ h1 {
   text-transform: uppercase;
 
   &--primary:focus {
-    background: $dark;
+    background: none;
     border: 1px solid $highlight;
     color: $highlight;
   }
 
   &:focus {
-    background: $dark;
+    background: none;
     border: 1px solid $highlight;
     color: $highlight;
   }
@@ -136,4 +136,10 @@ h1 {
 .fade-transform-leave-to {
   opacity: 0;
   transform: translateX(30px);
+}
+
+.fade-transform-leave-active[key="noTrans"],
+.fade-transform-enter-active[key="noTrans"] {
+  transition: none !important;
+  transform: none !important;
 }

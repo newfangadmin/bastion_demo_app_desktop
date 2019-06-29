@@ -74,7 +74,7 @@ export default {
   position: relative;
   overflow: hidden;
   background-color: #f2f2f2 !important;
-  padding-top: 60px;
+  padding-top: 50px;
 }
 
 .el-breadcrumb {

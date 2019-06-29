@@ -85,6 +85,8 @@ export default {
         if (valid) {
           this.loading = true
           var user = {
+            firstName: this.ruleForm.first,
+            lastName: this.ruleForm.last,
             email: this.ruleForm.email,
             pass: this.ruleForm.pass,
             addDate: new Date(),

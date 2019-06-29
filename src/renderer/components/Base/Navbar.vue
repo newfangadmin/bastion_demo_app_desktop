@@ -4,17 +4,19 @@
       <el-col :span="2" class="logoContainer">
         <img class="logo" src="~@/assets/logo.svg" />
       </el-col>
-      <el-col :span="12" :offset="0">
+      <el-col :span="20" :offset="0">
         <el-row>
-          <el-col :span="20" style="padding-top: 8px;">
+          <el-col :span="12" style="padding-top: 12px;">
             <el-row style="padding-top: 4px;">
               <el-col :span="9" class="usageType" style="">STORAGE<span class="usageDetails">( {{ (sUsage/(1000000)).toFixed(1) }}MB of {{ sCap/(1000000) }}MB )</span></el-col>
               <el-col :span="15">
                 <el-progress :percentage="sPercent" :color="usageColor1"></el-progress>
               </el-col>
             </el-row>
+          </el-col>
+          <el-col :span="12" style="padding-top: 12px;">
             <el-row style="padding-top: 4px;">
-              <el-col :span="9" class="usageType" style="">BANDWIDTH<span class="usageDetails">( {{ bUsage/(1000000) }}MB of {{ bCap/(1000000) }}MB )</span></el-col>
+              <el-col :span="9" class="usageType" style="">BANDWIDTH<span class="usageDetails">( {{ (bUsage/(1000000)).toFixed(1) }}MB of {{ bCap/(1000000) }}MB )</span></el-col>
               <el-col :span="15">
                 <el-progress :percentage="bPercent" :color="usageColor2"></el-progress>
               </el-col>
@@ -25,14 +27,14 @@
           </el-col> -->
         </el-row>
       </el-col>
-      <el-col :span="1" :offset="9">
+      <el-col :span="1" :offset="1">
         <el-row class="right-menu">
           <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
-            <avatar username="Jane Doe" :size="32" background-color="#222" color="#00a8ff" />
+            <avatar :username="uname" :size="32" background-color="#222" color="#00a8ff" />
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item>
+              <!-- <el-dropdown-item>
                 <span style="display:block;" @click="logout">Account</span>
-              </el-dropdown-item>
+              </el-dropdown-item> -->
               <el-dropdown-item>
                 <span style="display:block;" @click="logout">Logout</span>
               </el-dropdown-item>
@@ -55,6 +57,7 @@ export default {
     return {
       usageColor1: '#ffa801',
       usageColor2: '#44bd32',
+      uname: '',
       sCap: 0,
       bCap: 0,
       sUsage: 0,
@@ -100,6 +103,7 @@ export default {
     const self = this
     this.$db.find({ _id: localStorage.getItem('uid') }, function (err, docs) {
       if (!err) {
+        self.uname = docs[0].firstName + ' ' + docs[0].lastName
         self.sCap = Number(parseFloat(docs[0].storageCap))
         self.bCap = Number(parseFloat(docs[0].bandwidthCap))
         self.sUsage = Number(parseFloat(docs[0].sUsage).toFixed(1))
@@ -122,7 +126,7 @@ export default {
 
 <style lang="scss" scoped>
 .navbar {
-  height: 60px;
+  height: 50px;
   overflow: hidden;
   position: relative;
   background: #222;
@@ -136,7 +140,7 @@ export default {
     display: inline-block;
     text-align: center;
     height: 32px;
-    margin: 14px;
+    margin: 9px;
     margin-left: 10px;
     color: #fff;
     font-weight: 600;
@@ -172,7 +176,7 @@ export default {
 
     .avatar-container {
       margin-right: 10px;
-      margin-top: 13px;
+      margin-top: 8px;
 
       .avatar-wrapper {
         margin-top: 5px;

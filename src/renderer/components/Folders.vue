@@ -1,5 +1,5 @@
 <template>
-  <div class="loading" v-loading="loading" element-loading-background="rgba(0, 0, 0, 0.8)">
+  <div class="loading" v-loading="loading" element-loading-background="rgba(255, 255, 255, 0.8)">
     <el-row>
       <el-col :span="4" style="padding-top: 12px; padding-bottom: 12px;">
         <div class="foldersHeading">Folders</div>
@@ -7,7 +7,7 @@
       </el-col>
     </el-row>
     <el-row :gutter="20" class="foldersContainer">
-      <el-col :span="4">
+      <el-col :span="4" style="outline: none;">
         <el-card class="newFolderBtn" :body-style="{ padding: '0px' }" shadow="hover" @click.native="handleAddFolder()">
           <el-col :span="5" class="iconContainer">
             <i class="material-icons grey" style="line-height: 1.7">add_box</i>
@@ -19,7 +19,7 @@
       </el-col>
         <div v-if="!noFolders">
           <transition-group name="fade-transform">
-          <el-col :span="4" v-for="folder in folders" :key="folder._id">
+          <el-col :span="4" v-for="folder in folders" :key="folder._id" style="outline: none;">
             <el-card :body-style="{ padding: '0px' }" @click.native="handleClick(folder._id, folder.name)">
               <el-col :span="5" class="iconContainer">
                 <span class="fiv-sqo fiv-icon-folder image"></span>
@@ -154,6 +154,7 @@ export default {
   text-align: center;
   cursor: pointer;
   margin-top: 10px;
+  outline: none !important;
 }
 
 .image {
