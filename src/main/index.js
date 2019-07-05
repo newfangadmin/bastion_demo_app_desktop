@@ -1,6 +1,6 @@
 'use strict'
-
 import { app, BrowserWindow } from 'electron'
+const electron = require('electron')
 
 /**
  * Set `__static` path to static files in production
@@ -19,10 +19,12 @@ function createWindow () {
   /**
    * Initial window options
    */
+  const { width, height } = electron.screen.getPrimaryDisplay().workAreaSize
   mainWindow = new BrowserWindow({
-    height: 563,
-    useContentSize: true,
-    width: 1000
+    width: width,
+    height: height,
+    minWidth: width,
+    minHeight: height
   })
 
   mainWindow.loadURL(winURL)
@@ -30,6 +32,18 @@ function createWindow () {
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+}
+
+var shouldQuit = app.makeSingleInstance(function (commandLine, workingDirectory) {
+  // Someone tried to run a second instance, we should focus our window.
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.focus()
+  }
+})
+
+if (shouldQuit) {
+  app.quit()
 }
 
 app.on('ready', createWindow)

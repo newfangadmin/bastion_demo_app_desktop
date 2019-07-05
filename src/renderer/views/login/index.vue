@@ -5,7 +5,8 @@
         <img class="logo" src="~@/assets/logo.svg" />
       </el-col>
       <el-col :span="6" :offset="9" class="signupBtnContainer">
-        New to Bastion?<span class="signupBtn"><el-button @click="handleSignup()" class="secondaryBtn">SignUp</el-button></span>
+        <el-row v-if="!accountLimitReached">New to Bastion?<span class="signupBtn"><el-button @click="handleSignup()" class="secondaryBtn">SignUp</el-button></span></el-row>
+        <el-row v-else>You have reached your 2 user account limit per device. Delete an account to create a new one.</el-row>
       </el-col>
       <el-col :span="6" :offset="9" class="formContainer">
         <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" class="demo-ruleForm">
@@ -21,9 +22,14 @@
           <el-form-item prop="pass">
             <el-input type="password" placeholder="Password" v-model="ruleForm.pass" autocomplete="off"></el-input>
           </el-form-item>
-          <el-form-item style="float: right;">
+          <el-form-item>
+            <div style="float: left;">
+            <el-button @click="handleForgot()" class="secondaryBtn forgotBtn">Forgot Password?</el-button>
+            </div>
+            <div style="float: right;">
             <el-button @click="resetForm('ruleForm')" class="secondaryBtn">Reset</el-button>
             <el-button type="primary" @click="submitForm('ruleForm')">Login</el-button>
+            </div>
           </el-form-item>
         </el-form>
       </el-col>
@@ -32,6 +38,7 @@
 </template>
 
 <script>
+const { clipboard } = require('electron')
 
 export default {
   components: {
@@ -48,15 +55,16 @@ export default {
     }
     return {
       ruleForm: {
-        email: 'test4@user.com',
-        pass: '12345'
+        email: '',
+        pass: ''
       },
       rules: {
         pass: [
           { validator: validatePass, trigger: 'blur' }
         ]
       },
-      loading: false
+      loading: false,
+      accountLimitReached: false
     }
   },
   computed: {
@@ -67,7 +75,7 @@ export default {
         if (valid) {
           this.loading = true
           const self = this
-          this.$db.find({ email: this.ruleForm.email }, function (err, docs) {
+          this.$udb.find({ email: this.ruleForm.email }, function (err, docs) {
             if (!err) {
               self.loading = false
               if (docs.length > 0) {
@@ -116,9 +124,55 @@ export default {
 
     handleSignup () {
       this.$router.push({name: 'Signup'})
+    },
+
+    handleForgot () {
+      this.$prompt('Please enter the Email of the account for which you wish to retrieve your password', 'Forgot Password', {
+        confirmButtonText: 'Get',
+        cancelButtonText: 'Cancel'
+      }).then(({ value }) => {
+        const self = this
+        self.$udb.find({'email': value}, function (err, docs) {
+          if (!err) {
+            if (docs.length === 0) {
+              self.$message({
+                type: 'error',
+                message: 'No account found with this email',
+                duration: 5000
+              })
+            } else {
+              console.log(docs)
+              self.$alert('Password for this user is - <strong>' + docs[0].pass + '</strong>', 'Password', {
+                confirmButtonText: 'Copy',
+                dangerouslyUseHTMLString: true,
+                callback: action => {
+                  clipboard.writeText(docs[0].pass)
+                  self.$message({
+                    type: 'success',
+                    message: 'Password copied to clipboard'
+                  })
+                }
+              })
+            }
+          }
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Password retrieval cancelled'
+        })
+      })
     }
   },
   mounted () {
+    const self = this
+    this.$udb.find({}, function (err, docs) {
+      if (!err) {
+        if (docs.length >= 2) {
+          self.accountLimitReached = true
+        }
+      }
+    })
   }
 }
 </script>
@@ -147,5 +201,11 @@ export default {
   border: 1px solid #888;
   border-radius: 6px;
   margin-top: 20px;
+  padding: 6px;
+}
+
+.forgotBtn {
+  padding-left: 0px;
+  padding-right: 0px;
 }
 </style>

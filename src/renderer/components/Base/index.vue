@@ -6,13 +6,7 @@
       </div>
       <breadcrumb />
       <appmain />
-      <!-- <fab
-        :position="position"
-        :bg-color="bgColor"
-        :actions="fabActions"
-        @cache="cache"
-        icon-size="small"
-      ></fab> -->
+      <foot />
     </div>
   </div>
 </template>
@@ -21,6 +15,7 @@
 import navbar from '@/components/Base/Navbar'
 import breadcrumb from '@/components/Base/Breadcrumb'
 import appmain from '@/components/Base/AppMain'
+import foot from '@/components/Footer'
 // import fab from 'vue-fab'
 
 export default {
@@ -28,8 +23,8 @@ export default {
   components: {
     navbar,
     breadcrumb,
-    appmain
-    // fab
+    appmain,
+    foot
   },
   data () {
     return {
@@ -59,6 +54,7 @@ export default {
     position: relative;
     height: 100%;
     width: 100%;
+    background-color: #f2f2f2;
   }
 
   .fixed-header {

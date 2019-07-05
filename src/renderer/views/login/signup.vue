@@ -84,19 +84,19 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           this.loading = true
-          var user = {
+          var newuser = {
             firstName: this.ruleForm.first,
             lastName: this.ruleForm.last,
             email: this.ruleForm.email,
             pass: this.ruleForm.pass,
             addDate: new Date(),
-            storageCap: 1000000000,
-            bandwidthCap: 3000000000,
+            storageCap: 5000000000,
+            bandwidthCap: 5000000000,
             sUsage: 0,
             bUsage: 0
           }
           const self = this
-          this.$db.insert(user, function (err, newDoc) {
+          this.$udb.insert(newuser, function (err, newDoc) {
             if (!err) {
               var homeFolder = {
                 name: 'home',

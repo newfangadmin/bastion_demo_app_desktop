@@ -8,17 +8,17 @@
         <el-row>
           <el-col :span="12" style="padding-top: 12px;">
             <el-row style="padding-top: 4px;">
-              <el-col :span="9" class="usageType" style="">STORAGE<span class="usageDetails">( {{ (sUsage/(1000000)).toFixed(1) }}MB of {{ sCap/(1000000) }}MB )</span></el-col>
+              <el-col :span="9" class="usageType" :class="sPercent<90?'usageColor1':'danger'">STORAGE<span class="usageDetails">( {{ (sUsage/(1000000)).toFixed(1) }}MB of {{ sCap/(1000000) }}MB )</span></el-col>
               <el-col :span="15">
-                <el-progress :percentage="sPercent" :color="usageColor1"></el-progress>
+                <el-progress :percentage="sPercent" :color="sPercent<90?usageColor1:danger"></el-progress>
               </el-col>
             </el-row>
           </el-col>
           <el-col :span="12" style="padding-top: 12px;">
             <el-row style="padding-top: 4px;">
-              <el-col :span="9" class="usageType" style="">BANDWIDTH<span class="usageDetails">( {{ (bUsage/(1000000)).toFixed(1) }}MB of {{ bCap/(1000000) }}MB )</span></el-col>
+              <el-col :span="9" class="usageType" :class="sPercent<90?'usageColor1':'danger'">BANDWIDTH<span class="usageDetails">( {{ (bUsage/(1000000)).toFixed(1) }}MB of {{ bCap/(1000000) }}MB )</span></el-col>
               <el-col :span="15">
-                <el-progress :percentage="bPercent" :color="usageColor2"></el-progress>
+                <el-progress :percentage="bPercent" :color="sPercent<90?usageColor1:danger"></el-progress>
               </el-col>
             </el-row>
           </el-col>
@@ -32,11 +32,11 @@
           <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
             <avatar :username="uname" :size="32" background-color="#222" color="#00a8ff" />
             <el-dropdown-menu slot="dropdown">
-              <!-- <el-dropdown-item>
-                <span style="display:block;" @click="logout">Account</span>
-              </el-dropdown-item> -->
               <el-dropdown-item>
-                <span style="display:block;" @click="logout">Logout</span>
+                <span style="display:block;" @click="deleteAccount()"><i class="el-icon-delete"></i>Delete Account</span>
+              </el-dropdown-item>              
+              <el-dropdown-item divided>
+                <span style="display:block;" @click="logout"><i class="el-icon-switch-button"></i>Logout</span>
               </el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
@@ -57,6 +57,7 @@ export default {
     return {
       usageColor1: '#ffa801',
       usageColor2: '#44bd32',
+      danger: '#ff3f34',
       uname: '',
       sCap: 0,
       bCap: 0,
@@ -69,17 +70,14 @@ export default {
   computed: {
   },
   methods: {
-    format () {
-      return '5.32GB of 10GB'
-    },
-
     updateStorageUsage (fileSize) {
       const newUsage = Number(this.sUsage) + Number(fileSize)
       const self = this
-      this.$db.update({ _id: localStorage.getItem('uid') }, { $inc: { sUsage: fileSize } }, function (err, numReplaced) {
+      this.$udb.update({ _id: localStorage.getItem('uid') }, { $inc: { sUsage: fileSize } }, function (err, numReplaced) {
         if (!err) {
           self.sUsage = Number(parseFloat(newUsage).toFixed(1))
           self.sPercent = Number(parseFloat((self.sUsage / self.sCap) * 100).toFixed(1))
+          localStorage.setItem('sUsage', self.sUsage)
         }
       })
     },
@@ -87,10 +85,11 @@ export default {
     updateBandwidthUsage (fileSize) {
       const newUsage = Number(this.bUsage) + Number(fileSize)
       const self = this
-      this.$db.update({ _id: localStorage.getItem('uid') }, { $inc: { bUsage: fileSize } }, function (err, numReplaced) {
+      this.$udb.update({ _id: localStorage.getItem('uid') }, { $inc: { bUsage: fileSize } }, function (err, numReplaced) {
         if (!err) {
           self.bUsage = Number(parseFloat(newUsage).toFixed(1))
           self.bPercent = Number(parseFloat((self.bUsage / self.bCap) * 100).toFixed(1))
+          localStorage.setItem('bUsage', self.bUsage)
         }
       })
     },
@@ -101,7 +100,7 @@ export default {
   },
   mounted () {
     const self = this
-    this.$db.find({ _id: localStorage.getItem('uid') }, function (err, docs) {
+    this.$udb.find({ _id: localStorage.getItem('uid') }, function (err, docs) {
       if (!err) {
         self.uname = docs[0].firstName + ' ' + docs[0].lastName
         self.sCap = Number(parseFloat(docs[0].storageCap))
@@ -110,6 +109,10 @@ export default {
         self.bUsage = Number(parseFloat(docs[0].bUsage).toFixed(1))
         self.sPercent = Number(parseFloat((self.sUsage / self.sCap) * 100).toFixed(1))
         self.bPercent = Number(parseFloat((self.bUsage / self.bCap) * 100).toFixed(1))
+        localStorage.setItem('sUsage', self.sUsage)
+        localStorage.setItem('sCap', self.sCap)
+        localStorage.setItem('bUsage', self.bUsage)
+        localStorage.setItem('bCap', self.bCap)
       }
     })
 
@@ -209,6 +212,10 @@ export default {
     color: #888;
     padding-left: 6px;
     padding-top: 1px;
+
+    &.danger {
+      color: #ff3f34;
+    }
   }
 
   .usageType {

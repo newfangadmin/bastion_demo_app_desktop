@@ -1,11 +1,11 @@
 <template>
   <div class="loading" v-loading="loading" element-loading-background="rgba(255, 255, 255, 0.7)">
     <el-row>
-      <el-col :span="4" style="padding-top: 12px; padding-bottom: 12px;"><div class="filesHeading">Files</div></el-col>
+      <el-col :span="4" style="padding-top: 12px;"><div class="filesHeading">Files</div></el-col>
     </el-row>
     <el-row :gutter="20" class="filesContainer">
-      <el-col :span="4" style="outline: none;">
-        <input type="file" ref="fileSelect" style="display: none" multiple=false v-on:change="handleFileSelect()">
+      <el-col :xs="8" :sm="8" :md="6" :lg="4" :xl="4" style="outline: none; margin-top: 18px;">
+        <input type="file" ref="fileSelect" style="display: none" v-on:change="handleFileSelect()">
         <el-card class="newFileBtn" :body-style="{ padding: '0px' }" shadow="hover" @click.native="handleFileBtnClick()">
           <el-col :span="5" class="iconContainer">
             <i class="material-icons grey" style="line-height: 1.7">cloud_upload</i>
@@ -17,22 +17,23 @@
       </el-col>
       <div v-if="!noFiles">
         <transition-group name="fade-transform" mode="out-in">
-          <el-col :span="4" v-for="(file, index) in files" :key="index" style="outline: none;">
-            <el-tooltip placement="bottom">
-              <div slot="content">{{ file.name }}<br/>{{ file.addDate | moment('Do MMMM YYYY, h:mm:ss a') }}</div>
-              <el-card :body-style="{ padding: '0px' }" @click.native="handleFileDownload(file._id, file.name, file.size, file.uri, index)">
-                <el-col :span="5" class="iconContainer">
-                  <span class='fiv-sqo image' :class="['fiv-icon-' + file.fileIconType]"></span>
-                </el-col>
-                <el-col :span="19" class="fileNameContainer">
-                  <transition name="fade-transform" mode="out-in">
-                    <el-progress v-if="file.fuploading" class="uploadProgress" :percentage="upPercentage" :color="uploadColor"></el-progress>
-                    <el-progress v-else-if="file.fdownloading" class="downloadProgress" :percentage="downPercentage" :color="uploadColor"></el-progress>
-                    <div v-else class="fileName">{{ file.name }}</div>
-                  </transition>
-                </el-col>
-              </el-card>
-            </el-tooltip>
+          <el-col :xs="8" :sm="8" :md="6" :lg="4" :xl="4" v-for="(file, index) in files" :key="index" style="outline: none;" class="cardContainer">
+            <el-card :body-style="{ padding: '0px' }" class="fileOptions" shadow="never">
+              <el-col :span="15" style="padding-top: 8px; text-align: left">{{ file.size | sizeFilter }} | {{ file.addDate | moment("Do MMM YY") }}</el-col>
+              <el-col :span="9"><el-button @click="handleDelete(file._id, file.name, file.size, file.uri, index)" class="secondaryBtn" style="padding: 0px; padding-top: 9px; font-size: 12px;" icon="el-icon-delete">Delete</el-button></el-col>
+            </el-card>
+            <el-card :body-style="{ padding: '0px' }" @click.native="handleFileDownload(file._id, file.name, file.size, file.uri, index)">
+              <el-col :span="5" class="iconContainer">
+                <span class='fiv-sqo image' :class="['fiv-icon-' + file.fileIconType]"></span>
+              </el-col>
+              <el-col :span="19" class="fileNameContainer">
+                <transition name="fade-transform" mode="out-in">
+                  <el-progress v-if="file.fuploading" class="uploadProgress" :percentage="upPercentage" :color="uploadColor"></el-progress>
+                  <el-progress v-else-if="file.fdownloading" class="downloadProgress" :percentage="downPercentage" :color="uploadColor"></el-progress>
+                  <div v-else class="fileName">{{ file.name }}</div>
+                </transition>
+              </el-col>
+            </el-card>
           </el-col>
         </transition-group>
       </div>
@@ -44,6 +45,7 @@
 import icons from '../assets/icons.json'
 import { Api, JsonRpc } from 'eosjs'
 import { JsSignatureProvider } from 'eosjs/dist/eosjs-jssig'
+import { fetch } from '../api/db'
 const Uploader = require('../../../node_modules/newfang/dist/Uploader').default
 const Downloader = require('../../../node_modules/newfang/dist/Downloader').default
 const convergence = Uploader.generate_convergence()
@@ -73,23 +75,38 @@ export default {
       nodes: ['newfangnode1', 'newfangnode2', 'newfangnode3']
     }
   },
+  filters: {
+    sizeFilter (value) {
+      return (value / 1000000).toFixed(2) + 'MB'
+    }
+  },
   computed: {
   },
   methods: {
     getFiles () {
-      const self = this
-      self.$db.find({ uid: self.uid, type: 'file', parentId: self.curFolder }).sort({ addDate: -1 }).exec(function (err, docs) {
-        self.loading = false
-        if (!err) {
-          if (docs.length > 0) {
-            self.noFiles = false
-            self.files = docs
-            console.log(self.files)
-          } else {
-            self.noFiles = true
-          }
-        }
-      })
+      const params = { uid: this.uid, type: 'file', parentId: this.curFolder }
+      const sort = { addDate: -1 }
+      console.log(fetch)
+      const res = fetch(params, sort)
+      console.log(res)
+      // this.loading = false
+      // if (res.length > 0) {
+      //   this.noFiles = false
+      //   this.files = res
+      // } else {
+      //   this.noFiles = true
+      // }
+      // this.$db.find({ uid: self.uid, type: 'file', parentId: self.curFolder }).sort({ addDate: -1 }).exec(function (err, docs) {
+      //   self.loading = false
+      //   if (!err) {
+      //     if (docs.length > 0) {
+      //       self.noFiles = false
+      //       self.files = docs
+      //     } else {
+      //       self.noFiles = true
+      //     }
+      //   }
+      // })
     },
 
     handleFileBtnClick () {
@@ -118,7 +135,13 @@ export default {
           this.$message({
             type: 'error',
             message: 'File size cannot exceed 100MB',
-            duration: 6000
+            duration: 5000
+          })
+        } else if (Number(file.size) + Number(localStorage.getItem('sUsage')) > localStorage.getItem('sCap')) {
+          this.$message({
+            type: 'error',
+            message: 'File size cannot exceed your Storage Cap(' + localStorage.getItem('sCap') / 1000000000 + 'GB)',
+            duration: 5000
           })
         } else {
           this.uploading = true
@@ -158,7 +181,6 @@ export default {
             show_payer: false
           })
           const nodeName = res.rows[0].node_name
-          console.log(nodeName)
 
           const reqId = this.makeReqId(12)
 
@@ -248,7 +270,7 @@ export default {
                 self.files[0]._id = newDoc._id
                 self.files[0].size = newDoc.size
                 self.files[0].uri = newDoc.uri
-                console.log(self.files)
+                self.files[0].addDate = newDoc.addDate
                 self.uploadComplete = true
                 self.uploading = false
                 self.upPercentage = 0
@@ -276,84 +298,60 @@ export default {
     },
 
     async handleFileDownload (id, name, size, uri, index) {
-      const self = this
-      this.$confirm('File name: <strong>' + name + '</strong><br/>File size: <strong>' + (size / 1000000).toFixed(4) + ' MB</strong>', 'Confirm Download', {
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'Cancel',
-        dangerouslyUseHTMLString: true
-      }).then(async function ({ value }) {
-        const { dialog } = require('electron').remote
-        const res = dialog.showSaveDialog({
-          defaultPath: name
+      if ((size + localStorage.getItem('bUsage')) > localStorage.getItem('bCap')) {
+        this.$message({
+          type: 'error',
+          message: 'Download file size cannot exceed your Bandwidth Cap(' + localStorage.getItem('bCap') / 1000000000 + 'GB)',
+          duration: 6000
         })
+      } else {
+        const self = this
+        this.$confirm('File name: <strong>' + name + '</strong><br/>File size: <strong>' + (size / 1000000).toFixed(4) + ' MB</strong>', 'Confirm Download', {
+          confirmButtonText: 'Yes',
+          cancelButtonText: 'Cancel',
+          dangerouslyUseHTMLString: true
+        }).then(async function ({ value }) {
+          const { dialog } = require('electron').remote
+          const res = dialog.showSaveDialog({
+            defaultPath: name
+          })
 
-        const savePath = res.split('/').slice(0, -1).join('/')
-        self.files[index].fdownloading = true
+          const savePath = res.split('/').slice(0, -1).join('/')
+          self.files[index].fdownloading = true
 
-        const res1 = await self.rpc.get_table_rows({
-          json: true,
-          code: 'nebuloustest',
-          scope: 'nebuloustest',
-          table: 'nodestaba',
-          table_key: 'node_qlength',
-          index_position: 2,
-          key_type: 'i64',
-          limit: 1,
-          reverse: false,
-          show_payer: false
-        })
-        const nodeName = res1.rows[0].node_name
-        const nodeIP = res1.rows[0].node_ip
+          const res1 = await self.rpc.get_table_rows({
+            json: true,
+            code: 'nebuloustest',
+            scope: 'nebuloustest',
+            table: 'nodestaba',
+            table_key: 'node_qlength',
+            index_position: 2,
+            key_type: 'i64',
+            limit: 1,
+            reverse: false,
+            show_payer: false
+          })
+          const nodeName = res1.rows[0].node_name
+          const nodeIP = res1.rows[0].node_ip
 
-        const reqId = self.makeReqId(12)
+          const reqId = self.makeReqId(12)
 
-        await self.api.transact({
-          actions: [{
-            account: 'nebuloustest',
-            name: 'initrequest',
-            authorization: [{
-              actor: 'nebuloustest',
-              permission: 'active'
-            }],
-            data: {
-              request_id: reqId,
-              user_name: 'bastiondev11',
-              app_name: 'bastionapp11',
-              node_name: nodeName,
-              file_id: 'file123',
-              file_size: size,
-              request_type: 'download'
-            }
-          }]
-        }, {
-          blocksBehind: 3,
-          expireSeconds: 30
-        }).then(function () {
-        }).catch(function (err) {
-          console.log(err)
-        })
-        const downloader = new Downloader(String(uri), {
-          downloadPath: savePath,
-          type: 'Download',
-          helperUri: nodeIP
-        })
-
-        downloader.on('download_complete', async function () {
-          console.log('download complete')
           await self.api.transact({
             actions: [{
               account: 'nebuloustest',
-              name: 'closerequest',
+              name: 'initrequest',
               authorization: [{
                 actor: 'nebuloustest',
                 permission: 'active'
               }],
               data: {
+                request_id: reqId,
                 user_name: 'bastiondev11',
                 app_name: 'bastionapp11',
-                request_id: reqId,
-                work_nodes: self.nodes,
-                work_bytes: [Number(size) / 3, Number(size) / 3, Number(size) / 3]
+                node_name: nodeName,
+                file_id: 'file123',
+                file_size: size,
+                request_type: 'download'
               }
             }]
           }, {
@@ -363,27 +361,77 @@ export default {
           }).catch(function (err) {
             console.log(err)
           })
+          const downloader = new Downloader(String(uri), {
+            downloadPath: savePath,
+            type: 'Download',
+            helperUri: nodeIP
+          })
 
-          self.files[index].fdownloading = false
-          self.downPercentage = 0
-          self.$root.$emit('downloadedFile', size)
-          self.$message({
-            type: 'success',
-            message: 'Successfully downloaded file - ' + name,
-            duration: 5000
+          downloader.on('download_complete', async function () {
+            console.log('download complete')
+            await self.api.transact({
+              actions: [{
+                account: 'nebuloustest',
+                name: 'closerequest',
+                authorization: [{
+                  actor: 'nebuloustest',
+                  permission: 'active'
+                }],
+                data: {
+                  user_name: 'bastiondev11',
+                  app_name: 'bastionapp11',
+                  request_id: reqId,
+                  work_nodes: self.nodes,
+                  work_bytes: [Number(size) / 3, Number(size) / 3, Number(size) / 3]
+                }
+              }]
+            }, {
+              blocksBehind: 3,
+              expireSeconds: 30
+            }).then(function () {
+            }).catch(function (err) {
+              console.log(err)
+            })
+
+            self.files[index].fdownloading = false
+            self.downPercentage = 0
+            self.$root.$emit('downloadedFile', size)
+            self.$message({
+              type: 'success',
+              message: 'Successfully downloaded file - ' + name,
+              duration: 5000
+            })
+          })
+
+          downloader.on('download_progress', (percentage) => {
+            console.log('download progress: ', percentage + '%')
+            self.downPercentage = parseFloat(percentage.toFixed(1))
+          })
+
+          downloader.download(String(name))
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: 'File Download cancelled'
           })
         })
+      }
+    },
 
-        downloader.on('download_progress', (percentage) => {
-          console.log('download progress: ', percentage + '%')
-          self.downPercentage = parseFloat(percentage.toFixed(1))
+    handleDelete (id, name, size, uri) {
+      this.$confirm('This will permanently delete the file. Continue?', 'Confirm', {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.$message({
+          type: 'success',
+          message: 'Delete completed'
         })
-
-        downloader.download(String(name))
       }).catch(() => {
         this.$message({
           type: 'info',
-          message: 'File Download cancelled'
+          message: 'Delete canceled'
         })
       })
     },
@@ -416,7 +464,6 @@ export default {
 
 <style lang="scss" scoped>
 .el-card {
-  margin-top: 10px !important;
   outline: none !important;
 }
 
@@ -453,6 +500,40 @@ export default {
 .el-card {
   text-align: center;
   cursor: pointer;
+  position: relative;
+  z-index: 10;
+}
+
+.cardContainer {
+  position: relative;
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+
+.fileOptions {
+  position: absolute;
+  top: 5px;
+  left: 5.4%;
+  width: 88%;
+  height: 30px;
+  background-color:#e0e0e0;
+  border: 1px solid #dddddd;
+  border-radius: 0px 0px 4px 4px;
+  transition: all 0.4s;
+  z-index: 9;
+  // opacity: 0;
+  padding: 0px !important;
+  cursor:default;
+  font-size: 11px;
+  text-align: left;
+  padding-top: 12px;
+  color: #8b8b8b;
+}
+
+.cardContainer:hover .fileOptions {
+  // display: block;
+  // opacity: 1;
+  transform: translateY(36px);
 }
 
 .image {

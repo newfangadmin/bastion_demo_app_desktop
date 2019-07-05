@@ -8,7 +8,10 @@ import store from './store'
 import '@/styles/index.scss' // global css
 import ElementUI from 'element-ui'
 
-import db from './datastore'
+import userDB from './userData'
+import fileDB from './fileData'
+
+// import dbMixin from './dbMixin'
 
 Vue.use(ElementUI)
 
@@ -18,7 +21,8 @@ if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
 Vue.http = Vue.prototype.$http = axios
 Vue.config.productionTip = false
 
-Vue.prototype.$db = db
+Vue.prototype.$udb = userDB
+Vue.prototype.$db = fileDB
 
 /* eslint-disable no-new */
 new Vue({

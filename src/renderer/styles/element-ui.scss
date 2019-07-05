@@ -9,16 +9,16 @@
 }
 
 .el-dropdown-menu {
-  background-color: $light !important;
+  background-color: $dark !important;
   border: 1px solid $light !important;
 
   .el-dropdown-menu__item {
-    color: $dark !important;
+    color: $light !important;
   }
 }
 
 .el-popper[x-placement^="bottom"] .popper__arrow, .el-popper[x-placement^="bottom"] .popper__arrow::after {
-  border-bottom-color: $light !important;
+  border-bottom-color: $dark !important;
 }
 
 .el-progress-bar__innerText {
@@ -29,4 +29,17 @@
 .el-progress__text {
   font-size: 12px !important;
   color: #888 !important;
+}
+
+.el-dropdown-menu__item:hover {
+  background-color: #444 !important;
+}
+
+.el-dropdown-menu__item--divided {
+  border-top: 0px !important;
+}
+
+.el-dropdown-menu__item--divided:before {
+  height: 1px !important;
+  background-color: rgb(44, 44, 44) !important;
 }

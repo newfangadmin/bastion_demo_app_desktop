@@ -1,13 +1,13 @@
 <template>
   <div class="loading" v-loading="loading" element-loading-background="rgba(255, 255, 255, 0.8)">
     <el-row>
-      <el-col :span="4" style="padding-top: 12px; padding-bottom: 12px;">
+      <el-col :span="4" style="padding-top: 12px; padding-bottom: 0px;">
         <div class="foldersHeading">Folders</div>
         <el-button class="backBtn smBtn" v-if="!nullParent" icon="el-icon-back" @click="handleBack()">BACK</el-button>
       </el-col>
     </el-row>
     <el-row :gutter="20" class="foldersContainer">
-      <el-col :span="4" style="outline: none;">
+      <el-col :xs="8" :sm="8" :md="6" :lg="4" :xl="4" style="outline: none; margin-top: 18px;">
         <el-card class="newFolderBtn" :body-style="{ padding: '0px' }" shadow="hover" @click.native="handleAddFolder()">
           <el-col :span="5" class="iconContainer">
             <i class="material-icons grey" style="line-height: 1.7">add_box</i>
@@ -17,20 +17,24 @@
           </el-col>
         </el-card>
       </el-col>
-        <div v-if="!noFolders">
-          <transition-group name="fade-transform">
-          <el-col :span="4" v-for="folder in folders" :key="folder._id" style="outline: none;">
-            <el-card :body-style="{ padding: '0px' }" @click.native="handleClick(folder._id, folder.name)">
-              <el-col :span="5" class="iconContainer">
-                <span class="fiv-sqo fiv-icon-folder image"></span>
-              </el-col>
-              <el-col :span="19" class="fileNameContainer">
-                <div class="fileName">{{ folder.name }}</div>
-              </el-col>
-            </el-card>
-          </el-col>
-          </transition-group>
-        </div>
+      <div v-if="!noFolders">
+        <transition-group name="fade-transform">
+        <el-col :xs="8" :sm="8" :md="6" :lg="4" :xl="4" v-for="folder in folders" :key="folder._id" style="outline: none;" class="cardContainer">
+          <el-card :body-style="{ padding: '0px' }" class="folderOptions" shadow="never">
+            <el-col :span="15" style="padding-top: 8px; text-align: left">{{ folder.addDate | moment("Do MMM YY") }}</el-col>
+            <el-col :span="9"><el-button @click="handleDelete(folder._id)" class="secondaryBtn" style="padding: 0px; padding-top: 9px; font-size: 12px;" icon="el-icon-delete">Delete</el-button></el-col>
+          </el-card>
+          <el-card :body-style="{ padding: '0px' }" @click.native="handleClick(folder._id, folder.name)">
+            <el-col :span="5" class="iconContainer">
+              <span class="fiv-sqo fiv-icon-folder image"></span>
+            </el-col>
+            <el-col :span="19" class="fileNameContainer">
+              <div class="fileName">{{ folder.name }}</div>
+            </el-col>
+          </el-card>
+        </el-col>
+        </transition-group>
+      </div>
     </el-row>
   </div>
 </template>
@@ -153,8 +157,39 @@ export default {
 .el-card {
   text-align: center;
   cursor: pointer;
-  margin-top: 10px;
   outline: none !important;
+  position: relative;
+  z-index: 10;
+}
+
+.cardContainer {
+  position: relative;
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+
+.folderOptions {
+  position: absolute;
+  top: 5px;
+  left: 5.4%;
+  width: 88%;
+  height: 30px;
+  background-color:#e0e0e0;
+  border: 1px solid #dddddd;
+  border-radius: 0px 0px 4px 4px;
+  transition: all 0.4s;
+  z-index: 9;
+  // opacity: 0;
+  padding: 0px !important;
+  cursor:default;
+  font-size: 11px;
+  text-align: left;
+  padding-top: 12px;
+  color: #8b8b8b;
+}
+
+.cardContainer:hover .folderOptions {
+  transform: translateY(36px);
 }
 
 .image {
