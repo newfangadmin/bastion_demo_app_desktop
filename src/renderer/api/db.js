@@ -1,17 +1,24 @@
 // import userDB from './userData'
 import fileDB from '../fileData'
 
-const fetch = function (params, sort) {
+const dbFetch = function (params, sort, callback) {
   fileDB.find(params).sort(sort).exec(function (err, docs) {
-    console.log(params)
     if (!err) {
-      return docs
+      callback(null, docs)
     } else {
-      return {
-        err: err
-      }
+      callback(err)
     }
   })
 }
 
-export default { fetch }
+const dbInsert = function (doc, callback) {
+  fileDB.insert(doc, function (err, newDoc) {
+    if (!err) {
+      callback(null, newDoc)
+    } else {
+      callback(err)
+    }
+  })
+}
+
+export { dbFetch, dbInsert }

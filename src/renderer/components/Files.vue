@@ -5,7 +5,7 @@
     </el-row>
     <el-row :gutter="20" class="filesContainer">
       <el-col :xs="8" :sm="8" :md="6" :lg="4" :xl="4" style="outline: none; margin-top: 18px;">
-        <input type="file" ref="fileSelect" style="display: none" v-on:change="handleFileSelect()">
+        <input type="file" ref="fileSelect" style="display: none" v-on:change="handleFileUpload()">
         <el-card class="newFileBtn" :body-style="{ padding: '0px' }" shadow="hover" @click.native="handleFileBtnClick()">
           <el-col :span="5" class="iconContainer">
             <i class="material-icons grey" style="line-height: 1.7">cloud_upload</i>
@@ -45,7 +45,7 @@
 import icons from '../assets/icons.json'
 import { Api, JsonRpc } from 'eosjs'
 import { JsSignatureProvider } from 'eosjs/dist/eosjs-jssig'
-import { fetch } from '../api/db'
+import { dbFetch, dbInsert } from '../api/db'
 const Uploader = require('../../../node_modules/newfang/dist/Uploader').default
 const Downloader = require('../../../node_modules/newfang/dist/Downloader').default
 const convergence = Uploader.generate_convergence()
@@ -83,43 +83,6 @@ export default {
   computed: {
   },
   methods: {
-    getFiles () {
-      const params = { uid: this.uid, type: 'file', parentId: this.curFolder }
-      const sort = { addDate: -1 }
-      console.log(fetch)
-      const res = fetch(params, sort)
-      console.log(res)
-      // this.loading = false
-      // if (res.length > 0) {
-      //   this.noFiles = false
-      //   this.files = res
-      // } else {
-      //   this.noFiles = true
-      // }
-      // this.$db.find({ uid: self.uid, type: 'file', parentId: self.curFolder }).sort({ addDate: -1 }).exec(function (err, docs) {
-      //   self.loading = false
-      //   if (!err) {
-      //     if (docs.length > 0) {
-      //       self.noFiles = false
-      //       self.files = docs
-      //     } else {
-      //       self.noFiles = true
-      //     }
-      //   }
-      // })
-    },
-
-    handleFileBtnClick () {
-      if (!this.uploading) {
-        this.$refs.fileSelect.click()
-      } else {
-        this.$message({
-          type: 'error',
-          message: 'Upload in progress. Please wait.'
-        })
-      }
-    },
-
     findIcon (type) {
       return this.fileIcons.filter(
         function (data) {
@@ -128,21 +91,45 @@ export default {
       )
     },
 
-    async handleFileSelect () {
+    showMsgBox (type, message) {
+      this.$message({
+        type: type,
+        message: message,
+        duration: 5000
+      })
+    },
+
+    getFiles () {
+      const params = { uid: this.uid, type: 'file', parentId: this.curFolder }
+      const sort = { addDate: -1 }
+      dbFetch(params, sort, (err, res) => {
+        this.loading = false
+        if (err === null) {
+          if (res.length > 0) {
+            this.noFiles = false
+            this.files = res
+          } else {
+            this.noFiles = true
+          }
+        }
+      })
+    },
+
+    handleFileBtnClick () {
+      if (!this.uploading) {
+        this.$refs.fileSelect.click()
+      } else {
+        this.showMsgBox('error', 'Upload in progress. Please wait.')
+      }
+    },
+
+    handleFileUpload () {
       const file = this.$refs.fileSelect.files[0]
       if (file !== undefined) {
         if (file.size > 100000000) {
-          this.$message({
-            type: 'error',
-            message: 'File size cannot exceed 100MB',
-            duration: 5000
-          })
+          this.showMsgBox('error', 'File size cannot exceed 100MB')
         } else if (Number(file.size) + Number(localStorage.getItem('sUsage')) > localStorage.getItem('sCap')) {
-          this.$message({
-            type: 'error',
-            message: 'File size cannot exceed your Storage Cap(' + localStorage.getItem('sCap') / 1000000000 + 'GB)',
-            duration: 5000
-          })
+          this.showMsgBox('error', 'File size cannot exceed your Storage Cap(' + localStorage.getItem('sCap') / 1000000000 + 'GB)')
         } else {
           this.uploading = true
           this.uploadComplete = false
@@ -168,53 +155,13 @@ export default {
             this.files.unshift({fileIconType: fileIconType, name: file.name, fuploading: true, fdownloading: false})
           }
 
-          const res = await this.rpc.get_table_rows({
-            json: true,
-            code: 'nebuloustest',
-            scope: 'nebuloustest',
-            table: 'nodestaba',
-            table_key: 'node_qlength',
-            index_position: 2,
-            key_type: 'i64',
-            limit: 1,
-            reverse: false,
-            show_payer: false
-          })
-          const nodeName = res.rows[0].node_name
-
-          const reqId = this.makeReqId(12)
-
-          await this.api.transact({
-            actions: [{
-              account: 'nebuloustest',
-              name: 'initrequest',
-              authorization: [{
-                actor: 'nebuloustest',
-                permission: 'active'
-              }],
-              data: {
-                request_id: reqId,
-                user_name: 'bastiondev11',
-                app_name: 'bastionapp11',
-                node_name: nodeName,
-                file_id: 'file123',
-                file_size: file.size,
-                request_type: 'upload'
-              }
-            }]
-          }, {
-            blocksBehind: 3,
-            expireSeconds: 30
-          }).then(function () {
-          }).catch(function (err) {
-            console.log(err)
-          })
-
           const uploader = new Uploader({ filePath: file.path }, {
             convergence,
             k: 1,
             happy: 3,
-            n: 3
+            n: 3,
+            appId: 'bastionapp11',
+            userName: 'bastiondev11'
           })
 
           uploader.on('upload_complete', (uri) => {
@@ -233,52 +180,21 @@ export default {
               fuploading: false,
               fdownloading: false
             }
-            const self = this
-            self.$db.insert(newFile, async function (err, newDoc) {
-              if (!err) {
-                await self.api.transact({
-                  actions: [{
-                    account: 'nebuloustest',
-                    name: 'closerequest',
-                    authorization: [{
-                      actor: 'nebuloustest',
-                      permission: 'active'
-                    }],
-                    data: {
-                      user_name: 'bastiondev11',
-                      app_name: 'bastionapp11',
-                      request_id: reqId,
-                      work_nodes: self.nodes,
-                      work_bytes: [Number(file.size), Number(file.size), Number(file.size)]
-                    }
-                  }]
-                }, {
-                  blocksBehind: 3,
-                  expireSeconds: 30
-                }).then(function () {
-                }).catch(function (err) {
-                  console.log(err)
-                })
-                self.$message({
-                  type: 'success',
-                  message: 'Successfully uploaded file - ' + file.name,
-                  duration: 5000
-                })
-                // setTimeout(self.uploadComp, 2000)
-                self.files[0].fuploading = false
-                self.files[0].fdownloading = false
-                self.files[0]._id = newDoc._id
-                self.files[0].size = newDoc.size
-                self.files[0].uri = newDoc.uri
-                self.files[0].addDate = newDoc.addDate
-                self.uploadComplete = true
-                self.uploading = false
-                self.upPercentage = 0
+            dbInsert(newFile, (err, res) => {
+              if (err === null) {
+                this.showMsgBox('success', 'Successfully uploaded file - ' + file.name)
+                this.files[0].fuploading = false
+                this.files[0].fdownloading = false
+                this.files[0]._id = res._id
+                this.files[0].size = res.size
+                this.files[0].uri = res.uri
+                this.files[0].addDate = res.addDate
+                this.uploadComplete = true
+                this.uploading = false
+                this.upPercentage = 0
               }
             })
-
-            const fileSize = file.size * 3
-            self.$root.$emit('uploadedFile', fileSize)
+            this.$root.$emit('uploadedFile', file.size * 3)
           })
 
           uploader.on('upload_progress', (percentage) => {
@@ -290,10 +206,7 @@ export default {
         }
       } else {
         console.log('cancelled')
-        this.$message({
-          type: 'info',
-          message: 'File upload aborted'
-        })
+        this.showMsgBox('info', 'File upload aborted')
       }
     },
 
