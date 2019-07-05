@@ -46,8 +46,8 @@ import icons from '../assets/icons.json'
 import { Api, JsonRpc } from 'eosjs'
 import { JsSignatureProvider } from 'eosjs/dist/eosjs-jssig'
 import { dbFetch, dbInsert } from '../api/db'
-const Uploader = require('../../../node_modules/newfang/dist/Uploader').default
-const Downloader = require('../../../node_modules/newfang/dist/Downloader').default
+const Uploader = require('../../../node_modules/newfang_node/dist/Uploader').default
+const Downloader = require('../../../node_modules/newfang_node/dist/Downloader').default
 const convergence = Uploader.generate_convergence()
 
 export default {
