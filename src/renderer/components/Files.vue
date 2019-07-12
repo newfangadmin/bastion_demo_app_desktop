@@ -18,7 +18,7 @@
       <div v-if="!noFiles">
         <transition-group name="fade-transform" mode="out-in">
           <el-col :xs="8" :sm="8" :md="6" :lg="4" :xl="4" v-for="(file, index) in files" :key="index" style="outline: none;" class="cardContainer">
-            <el-card :body-style="{ padding: '0px' }" class="fileOptions" shadow="never">
+            <el-card v-if="!file.fuploading" :body-style="{ padding: '0px' }" class="fileOptions" shadow="never">
               <el-col :span="15" style="padding-top: 8px; text-align: left">{{ file.size | sizeFilter }} | {{ file.addDate | moment("Do MMM YY") }}</el-col>
               <el-col :span="9"><el-button @click="handleDelete(file._id, file.name, file.size, file.uri, index)" class="secondaryBtn" style="padding: 0px; padding-top: 9px; font-size: 12px;" icon="el-icon-delete">Delete</el-button></el-col>
             </el-card>
@@ -43,12 +43,10 @@
 
 <script>
 import icons from '../assets/icons.json'
-import { Api, JsonRpc } from 'eosjs'
-import { JsSignatureProvider } from 'eosjs/dist/eosjs-jssig'
 import { dbFetch, dbInsert } from '../api/db'
-const Uploader = require('../../../node_modules/newfang_node/dist/Uploader').default
-const Downloader = require('../../../node_modules/newfang_node/dist/Downloader').default
-const convergence = Uploader.generate_convergence()
+const Uploader = require('../../../node_modules/nf/newfang_uploader').default
+const Downloader = require('../../../node_modules/nf/newfang_downloader').default
+// const convergence = Uploader.generate_convergence()
 
 export default {
   components: {
@@ -83,6 +81,22 @@ export default {
   computed: {
   },
   methods: {
+    getFileMeta (file, fileExt) {
+      var fileIconType = 'blank'
+      if (fileExt === undefined) {
+        var index = file.name.lastIndexOf('.')
+        fileExt = file.name.substr(index + 1)
+      } else {
+        fileIconType = this.findIcon(fileExt)
+        if (fileIconType.length === 0) {
+          fileIconType = 'blank'
+        } else {
+          fileIconType = fileIconType[0]
+        }
+      }
+      return { fileExt, fileIconType }
+    },
+
     findIcon (type) {
       return this.fileIcons.filter(
         function (data) {
@@ -133,20 +147,8 @@ export default {
         } else {
           this.uploading = true
           this.uploadComplete = false
-
-          var fileType = file.type.split('/')[1]
-          var fileIconType = 'blank'
-          if (fileType === undefined) {
-            var index = file.name.lastIndexOf('.')
-            fileType = file.name.substr(index + 1)
-          } else {
-            fileIconType = this.findIcon(fileType)
-            if (fileIconType.length === 0) {
-              fileIconType = 'blank'
-            } else {
-              fileIconType = fileIconType[0]
-            }
-          }
+          var fileExt = file.type.split('/')[1]
+          let { fileType, fileIconType } = this.getFileMeta(file, fileExt)
           this.activeFileIcon = fileIconType
           if (this.files.length === 0) {
             this.noFiles = false
@@ -155,13 +157,13 @@ export default {
             this.files.unshift({fileIconType: fileIconType, name: file.name, fuploading: true, fdownloading: false})
           }
 
-          const uploader = new Uploader({ filePath: file.path }, {
-            convergence,
-            k: 1,
-            happy: 3,
-            n: 3,
-            appId: 'bastionapp11',
-            userName: 'bastiondev11'
+          const uploader = new Uploader({ filePath: file.path }, { pure: false })
+
+          uploader.start_upload()
+
+          uploader.on('upload_progress', (percentage) => {
+            console.log('upload progress: ', percentage + '%')
+            this.upPercentage = parseFloat(percentage.toFixed(1))
           })
 
           uploader.on('upload_complete', (uri) => {
@@ -196,13 +198,6 @@ export default {
             })
             this.$root.$emit('uploadedFile', file.size * 3)
           })
-
-          uploader.on('upload_progress', (percentage) => {
-            console.log('upload progress: ', percentage + '%')
-            this.upPercentage = parseFloat(percentage.toFixed(1))
-          })
-
-          uploader.start_upload()
         }
       } else {
         console.log('cancelled')
@@ -210,123 +205,45 @@ export default {
       }
     },
 
-    async handleFileDownload (id, name, size, uri, index) {
-      if ((size + localStorage.getItem('bUsage')) > localStorage.getItem('bCap')) {
-        this.$message({
-          type: 'error',
-          message: 'Download file size cannot exceed your Bandwidth Cap(' + localStorage.getItem('bCap') / 1000000000 + 'GB)',
-          duration: 6000
-        })
+    handleFileDownload (id, name, size, uri, index) {
+      if ((Number(size) + Number(localStorage.getItem('bUsage'))) > localStorage.getItem('bCap')) {
+        this.showMsgBox('error', 'Download file size cannot exceed your Bandwidth Cap(' + localStorage.getItem('bCap') / 1000000000 + 'GB)')
       } else {
-        const self = this
-        this.$confirm('File name: <strong>' + name + '</strong><br/>File size: <strong>' + (size / 1000000).toFixed(4) + ' MB</strong>', 'Confirm Download', {
+        this.$confirm('File name: <strong>' + name + '</strong><br/>File size: <strong>' + (size / 1000000).toFixed(2) + ' MB</strong>', 'Confirm Download', {
           confirmButtonText: 'Yes',
           cancelButtonText: 'Cancel',
           dangerouslyUseHTMLString: true
-        }).then(async function ({ value }) {
+        }).then(() => {
           const { dialog } = require('electron').remote
           const res = dialog.showSaveDialog({
             defaultPath: name
           })
 
           const savePath = res.split('/').slice(0, -1).join('/')
-          self.files[index].fdownloading = true
+          this.files[index].fdownloading = true
 
-          const res1 = await self.rpc.get_table_rows({
-            json: true,
-            code: 'nebuloustest',
-            scope: 'nebuloustest',
-            table: 'nodestaba',
-            table_key: 'node_qlength',
-            index_position: 2,
-            key_type: 'i64',
-            limit: 1,
-            reverse: false,
-            show_payer: false
-          })
-          const nodeName = res1.rows[0].node_name
-          const nodeIP = res1.rows[0].node_ip
-
-          const reqId = self.makeReqId(12)
-
-          await self.api.transact({
-            actions: [{
-              account: 'nebuloustest',
-              name: 'initrequest',
-              authorization: [{
-                actor: 'nebuloustest',
-                permission: 'active'
-              }],
-              data: {
-                request_id: reqId,
-                user_name: 'bastiondev11',
-                app_name: 'bastionapp11',
-                node_name: nodeName,
-                file_id: 'file123',
-                file_size: size,
-                request_type: 'download'
-              }
-            }]
-          }, {
-            blocksBehind: 3,
-            expireSeconds: 30
-          }).then(function () {
-          }).catch(function (err) {
-            console.log(err)
-          })
           const downloader = new Downloader(String(uri), {
             downloadPath: savePath,
-            type: 'Download',
-            helperUri: nodeIP
-          })
-
-          downloader.on('download_complete', async function () {
-            console.log('download complete')
-            await self.api.transact({
-              actions: [{
-                account: 'nebuloustest',
-                name: 'closerequest',
-                authorization: [{
-                  actor: 'nebuloustest',
-                  permission: 'active'
-                }],
-                data: {
-                  user_name: 'bastiondev11',
-                  app_name: 'bastionapp11',
-                  request_id: reqId,
-                  work_nodes: self.nodes,
-                  work_bytes: [Number(size) / 3, Number(size) / 3, Number(size) / 3]
-                }
-              }]
-            }, {
-              blocksBehind: 3,
-              expireSeconds: 30
-            }).then(function () {
-            }).catch(function (err) {
-              console.log(err)
-            })
-
-            self.files[index].fdownloading = false
-            self.downPercentage = 0
-            self.$root.$emit('downloadedFile', size)
-            self.$message({
-              type: 'success',
-              message: 'Successfully downloaded file - ' + name,
-              duration: 5000
-            })
-          })
-
-          downloader.on('download_progress', (percentage) => {
-            console.log('download progress: ', percentage + '%')
-            self.downPercentage = parseFloat(percentage.toFixed(1))
+            type: 'Stream',
+            pure: false
           })
 
           downloader.download(String(name))
-        }).catch(() => {
-          this.$message({
-            type: 'info',
-            message: 'File Download cancelled'
+
+          downloader.on('download_progress', (percentage) => {
+            console.log('download progress: ', percentage + '%')
+            this.downPercentage = parseFloat(percentage.toFixed(1))
           })
+
+          downloader.on('download_complete', () => {
+            console.log('download complete')
+            this.files[index].fdownloading = false
+            this.downPercentage = 0
+            this.$root.$emit('downloadedFile', size)
+            this.showMsgBox('success', 'Successfully downloaded file - ' + name)
+          })
+        }).catch(() => {
+          this.showMsgBox('info', 'File Download cancelled')
         })
       }
     },
@@ -363,14 +280,6 @@ export default {
     this.uid = localStorage.getItem('uid')
     this.curFolder = this.$route.params.fid
     this.getFiles()
-    this.rpc = new JsonRpc('https://jungle2.cryptolions.io:443')
-    const rpc = this.rpc
-    // const privateKeyUser = '5Jwx6dwGmvuefoLwmRHw2cpgm53i3Qn1Foy71YtxSX9NCzuT3on'
-    const privateKeyAdmin = '5JbaLfb7FMvSyogGuSgJhxLhNw26j5DjhC3EnUxsN9HfyBsdvgS'
-    // const signatureProvider = new JsSignatureProvider([privateKeyUser])
-    const signatureProvider = new JsSignatureProvider([privateKeyAdmin])
-    this.api = new Api({ rpc, signatureProvider })
-    // this.adminAPI = new Api({ rpc, signatureProvider2 })
   }
 }
 </script>

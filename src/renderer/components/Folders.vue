@@ -40,6 +40,7 @@
 </template>
 
 <script>
+import { dbFetch, dbInsert } from '../api/db'
 
 export default {
   components: {
@@ -58,16 +59,25 @@ export default {
   computed: {
   },
   methods: {
+    showMsgBox (type, message) {
+      this.$message({
+        type: type,
+        message: message,
+        duration: 5000
+      })
+    },
+
     getFolders () {
-      const self = this
-      self.$db.find({ uid: self.uid, type: 'folder', parentId: self.curFolderId }).sort({ addDate: -1 }).exec(function (err, docs1) {
-        self.loading = false
+      const params = { uid: this.uid, type: 'folder', parentId: this.curFolderId }
+      const sort = { addDate: -1 }
+      dbFetch(params, sort, (err, res) => {
+        this.loading = false
         if (!err) {
-          if (docs1.length > 0) {
-            self.noFolders = false
-            self.folders = docs1
+          if (res.length > 0) {
+            this.noFolders = false
+            this.folders = res
           } else {
-            self.noFolders = true
+            this.noFolders = true
           }
         }
       })
@@ -89,22 +99,14 @@ export default {
           type: 'folder',
           parentId: this.curFolderId
         }
-        const self = this
-        self.$db.insert(newFolder, function (err, newDoc1) {
+        dbInsert(newFolder, (err, res) => {
           if (!err) {
-            // self.$root.$emit('addedFolder')
-            self.getFolders()
-            self.$message({
-              type: 'success',
-              message: 'Successfully created folder with name - ' + value
-            })
+            this.getFolders()
+            this.showMsgBox('success', 'Successfully created folder with name - ' + value)
           }
         })
       }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: 'Folder creation cancelled'
-        })
+        this.showMsgBox('info', 'Folder creation cancelled')
       })
     },
 
