@@ -90,8 +90,8 @@ export default {
             email: this.ruleForm.email,
             pass: this.ruleForm.pass,
             addDate: new Date(),
-            storageCap: 5000000000,
-            bandwidthCap: 5000000000,
+            storageCap: 1000000000,
+            bandwidthCap: 1000000000,
             sUsage: 0,
             bUsage: 0
           }

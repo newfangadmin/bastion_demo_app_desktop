@@ -44,8 +44,8 @@
 <script>
 import icons from '../assets/icons.json'
 import { dbFetch, dbInsert } from '../api/db'
-const Uploader = require('../../../node_modules/nf/newfang_uploader').default
-const Downloader = require('../../../node_modules/nf/newfang_downloader').default
+const Uploader = require('../../../node_modules/newfang/newfang_uploader').default
+const Downloader = require('../../../node_modules/newfang/newfang_downloader').default
 // const convergence = Uploader.generate_convergence()
 
 export default {
@@ -159,13 +159,6 @@ export default {
 
           const uploader = new Uploader({ filePath: file.path }, { pure: false })
 
-          uploader.start_upload()
-
-          uploader.on('upload_progress', (percentage) => {
-            console.log('upload progress: ', percentage + '%')
-            this.upPercentage = parseFloat(percentage.toFixed(1))
-          })
-
           uploader.on('upload_complete', (uri) => {
             console.log('upload complete: ', uri)
             this.newFileName = file.name
@@ -198,6 +191,17 @@ export default {
             })
             this.$root.$emit('uploadedFile', file.size * 3)
           })
+
+          uploader.on('error', (e) => {
+            console.log({e})
+          })
+
+          uploader.on('upload_progress', (percentage) => {
+            console.log('upload progress: ', percentage + '%')
+            this.upPercentage = parseFloat(percentage.toFixed(1))
+          })
+
+          uploader.start_upload()
         }
       } else {
         console.log('cancelled')
@@ -228,8 +232,6 @@ export default {
             pure: false
           })
 
-          downloader.download(String(name))
-
           downloader.on('download_progress', (percentage) => {
             console.log('download progress: ', percentage + '%')
             this.downPercentage = parseFloat(percentage.toFixed(1))
@@ -242,6 +244,8 @@ export default {
             this.$root.$emit('downloadedFile', size)
             this.showMsgBox('success', 'Successfully downloaded file - ' + name)
           })
+
+          downloader.download(String(name))
         }).catch(() => {
           this.showMsgBox('info', 'File Download cancelled')
         })

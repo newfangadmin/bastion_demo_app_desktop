@@ -24,7 +24,10 @@ function createWindow () {
     width: width,
     height: height,
     minWidth: width,
-    minHeight: height
+    minHeight: height,
+    webPreferences: {
+      nodeIntegration: true
+    }
   })
 
   mainWindow.loadURL(winURL)
@@ -34,17 +37,24 @@ function createWindow () {
   })
 }
 
-var shouldQuit = app.makeSingleInstance(function (commandLine, workingDirectory) {
-  // Someone tried to run a second instance, we should focus our window.
+// var shouldQuit = app.makeSingleInstance(function (commandLine, workingDirectory) {
+//   // Someone tried to run a second instance, we should focus our window.
+//   if (mainWindow) {
+//     if (mainWindow.isMinimized()) mainWindow.restore()
+//     mainWindow.focus()
+//   }
+// })
+
+// if (shouldQuit) {
+//   app.quit()
+// }
+app.requestSingleInstanceLock()
+app.on('second-instance', (event, argv, cwd) => {
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore()
     mainWindow.focus()
   }
 })
-
-if (shouldQuit) {
-  app.quit()
-}
 
 app.on('ready', createWindow)
 
