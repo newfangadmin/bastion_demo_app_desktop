@@ -190,6 +190,7 @@ export default {
                 this.uploading = false
                 this.$root.$emit('idle')
                 this.upPercentage = 0
+                this.$refs.fileSelect.value = ''
               }
             })
             this.$root.$emit('uploadedFile', file.size * 3)
