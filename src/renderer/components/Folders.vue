@@ -53,7 +53,8 @@ export default {
       folders: null,
       curFolderId: '',
       parentFolderId: '',
-      nullParent: true
+      nullParent: true,
+      working: false
     }
   },
   computed: {
@@ -84,34 +85,46 @@ export default {
     },
 
     handleClick (key, name) {
-      this.$router.push({name: 'Home', params: {fid: key, parentId: this.curFolderId}})
+      if (!this.working) {
+        this.$router.push({name: 'Home', params: {fid: key, parentId: this.curFolderId}})
+      } else {
+        this.showMsgBox('error', 'Upload/Download in progress. Please wait.')
+      }
     },
 
     handleAddFolder () {
-      this.$prompt('Please enter the Folder Name', 'Add Folder', {
-        confirmButtonText: 'Add',
-        cancelButtonText: 'Cancel'
-      }).then(({ value }) => {
-        var newFolder = {
-          name: value,
-          uid: localStorage.getItem('uid'),
-          addDate: new Date(),
-          type: 'folder',
-          parentId: this.curFolderId
-        }
-        dbInsert(newFolder, (err, res) => {
-          if (!err) {
-            this.getFolders()
-            this.showMsgBox('success', 'Successfully created folder with name - ' + value)
+      if (!this.working) {
+        this.$prompt('Please enter the Folder Name', 'Add Folder', {
+          confirmButtonText: 'Add',
+          cancelButtonText: 'Cancel'
+        }).then(({ value }) => {
+          var newFolder = {
+            name: value,
+            uid: localStorage.getItem('uid'),
+            addDate: new Date(),
+            type: 'folder',
+            parentId: this.curFolderId
           }
+          dbInsert(newFolder, (err, res) => {
+            if (!err) {
+              this.getFolders()
+              this.showMsgBox('success', 'Successfully created folder with name - ' + value)
+            }
+          })
+        }).catch(() => {
+          this.showMsgBox('info', 'Folder creation cancelled')
         })
-      }).catch(() => {
-        this.showMsgBox('info', 'Folder creation cancelled')
-      })
+      } else {
+        this.showMsgBox('error', 'Upload/Download in progress. Please wait.')
+      }
     },
 
     handleBack () {
-      this.$router.go(-1)
+      if (!this.working) {
+        this.$router.go(-1)
+      } else {
+        this.showMsgBox('error', 'Upload/Download in progress. Please wait.')
+      }
     }
   },
   mounted () {
@@ -124,6 +137,12 @@ export default {
       this.nullParent = false
     }
     this.getFolders()
+    this.$root.$on('working', () => {
+      this.working = true
+    })
+    this.$root.$on('idle', () => {
+      this.working = false
+    })
   }
 }
 </script>

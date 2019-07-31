@@ -58,6 +58,7 @@ export default {
       loading: true,
       uploadColor: '#00a8ff',
       uploading: false,
+      downloading: false,
       uploadComplete: true,
       upPercentage: 0,
       downPercentage: 0,
@@ -130,10 +131,10 @@ export default {
     },
 
     handleFileBtnClick () {
-      if (!this.uploading) {
+      if (!this.uploading && !this.downloading) {
         this.$refs.fileSelect.click()
       } else {
-        this.showMsgBox('error', 'Upload in progress. Please wait.')
+        this.showMsgBox('error', 'Upload/Download in progress. Please wait.')
       }
     },
 
@@ -146,6 +147,7 @@ export default {
           this.showMsgBox('error', 'File size cannot exceed your Storage Cap(' + localStorage.getItem('sCap') / 1000000000 + 'GB)')
         } else {
           this.uploading = true
+          this.$root.$emit('working')
           this.uploadComplete = false
           var fileExt = file.type.split('/')[1]
           let { fileType, fileIconType } = this.getFileMeta(file, fileExt)
@@ -186,6 +188,7 @@ export default {
                 this.files[0].addDate = res.addDate
                 this.uploadComplete = true
                 this.uploading = false
+                this.$root.$emit('idle')
                 this.upPercentage = 0
               }
             })
@@ -194,6 +197,8 @@ export default {
 
           uploader.on('error', (e) => {
             console.log({e})
+            this.uploading = false
+            this.$root.$emit('idle')
           })
 
           uploader.on('upload_progress', (percentage) => {
@@ -210,45 +215,54 @@ export default {
     },
 
     handleFileDownload (id, name, size, uri, index) {
-      if ((Number(size) + Number(localStorage.getItem('bUsage'))) > localStorage.getItem('bCap')) {
-        this.showMsgBox('error', 'Download file size cannot exceed your Bandwidth Cap(' + localStorage.getItem('bCap') / 1000000000 + 'GB)')
+      if (!this.downloading && !this.uploading) {
+        if ((Number(size) + Number(localStorage.getItem('bUsage'))) > localStorage.getItem('bCap')) {
+          this.showMsgBox('error', 'Download file size cannot exceed your Bandwidth Cap(' + localStorage.getItem('bCap') / 1000000000 + 'GB)')
+        } else {
+          this.$confirm('File name: <strong>' + name + '</strong><br/>File size: <strong>' + (size / 1000000).toFixed(2) + ' MB</strong>', 'Confirm Download', {
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'Cancel',
+            dangerouslyUseHTMLString: true
+          }).then(() => {
+            this.downloading = true
+            this.$root.$emit('working')
+            const { dialog } = require('electron').remote
+            const res = dialog.showSaveDialog({
+              defaultPath: name
+            })
+
+            const savePath = res.split('/').slice(0, -1).join('/')
+            this.files[index].fdownloading = true
+
+            const downloader = new Downloader(String(uri), {
+              downloadPath: savePath,
+              type: 'Stream',
+              pure: false
+            })
+
+            downloader.on('download_progress', (percentage) => {
+              console.log('download progress: ', percentage + '%')
+              this.downPercentage = parseFloat(percentage.toFixed(1))
+            })
+
+            downloader.on('download_complete', () => {
+              console.log('download complete')
+              this.files[index].fdownloading = false
+              this.downPercentage = 0
+              this.$root.$emit('downloadedFile', size)
+              this.showMsgBox('success', 'Successfully downloaded file - ' + name)
+              this.downloading = false
+              this.$root.$emit('idle')
+            })
+
+            downloader.download(String(name))
+          }).catch(() => {
+            this.showMsgBox('info', 'File Download cancelled')
+            this.downloading = false
+          })
+        }
       } else {
-        this.$confirm('File name: <strong>' + name + '</strong><br/>File size: <strong>' + (size / 1000000).toFixed(2) + ' MB</strong>', 'Confirm Download', {
-          confirmButtonText: 'Yes',
-          cancelButtonText: 'Cancel',
-          dangerouslyUseHTMLString: true
-        }).then(() => {
-          const { dialog } = require('electron').remote
-          const res = dialog.showSaveDialog({
-            defaultPath: name
-          })
-
-          const savePath = res.split('/').slice(0, -1).join('/')
-          this.files[index].fdownloading = true
-
-          const downloader = new Downloader(String(uri), {
-            downloadPath: savePath,
-            type: 'Stream',
-            pure: false
-          })
-
-          downloader.on('download_progress', (percentage) => {
-            console.log('download progress: ', percentage + '%')
-            this.downPercentage = parseFloat(percentage.toFixed(1))
-          })
-
-          downloader.on('download_complete', () => {
-            console.log('download complete')
-            this.files[index].fdownloading = false
-            this.downPercentage = 0
-            this.$root.$emit('downloadedFile', size)
-            this.showMsgBox('success', 'Successfully downloaded file - ' + name)
-          })
-
-          downloader.download(String(name))
-        }).catch(() => {
-          this.showMsgBox('info', 'File Download cancelled')
-        })
+        this.showMsgBox('error', 'Upload/Download in progress. Please wait.')
       }
     },
 
