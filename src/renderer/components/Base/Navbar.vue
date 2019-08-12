@@ -70,8 +70,14 @@ export default {
   computed: {
   },
   methods: {
-    updateStorageUsage (fileSize) {
-      const newUsage = Number(this.sUsage) + Number(fileSize)
+    updateStorageUsage (fileSize, type) {
+      var newUsage = 0
+      if (type === 'uploaded') {
+        newUsage = Number(this.sUsage) + Number(fileSize)
+      } else if (type === 'removed') {
+        newUsage = Number(this.sUsage) - Number(fileSize)
+        fileSize = -fileSize
+      }
       const self = this
       this.$udb.update({ _id: localStorage.getItem('uid') }, { $inc: { sUsage: fileSize } }, function (err, numReplaced) {
         if (!err) {
@@ -116,12 +122,16 @@ export default {
       }
     })
 
-    this.$root.$on('uploadedFile', (data) => {
-      this.updateStorageUsage(data)
+    this.$root.$on('uploadedFile', (size) => {
+      this.updateStorageUsage(size, 'uploaded')
     })
 
     this.$root.$on('downloadedFile', (data) => {
       this.updateBandwidthUsage(data)
+    })
+
+    this.$root.$on('removedFile', (size) => {
+      this.updateStorageUsage(size, 'removed')
     })
   }
 }

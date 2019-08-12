@@ -21,4 +21,14 @@ const dbInsert = function (doc, callback) {
   })
 }
 
-export { dbFetch, dbInsert }
+const dbRemove = function (id, callback) {
+  fileDB.remove({ _id: id }, {}, function (err, numRemoved) {
+    if (!err) {
+      callback(null, numRemoved)
+    } else {
+      callback(err)
+    }
+  })
+}
+
+export { dbFetch, dbInsert, dbRemove }

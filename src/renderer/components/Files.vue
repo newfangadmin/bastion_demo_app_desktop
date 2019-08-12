@@ -43,10 +43,10 @@
 
 <script>
 import icons from '../assets/icons.json'
-import { dbFetch, dbInsert } from '../api/db'
+import { dbFetch, dbInsert, dbRemove } from '../api/db'
 const Uploader = require('../../../node_modules/newfang/newfang_uploader').default
 const Downloader = require('../../../node_modules/newfang/newfang_downloader').default
-// const convergence = Uploader.generate_convergence()
+const Utils = require('../../../node_modules/newfang/newfang_utils').default
 
 export default {
   components: {
@@ -159,7 +159,8 @@ export default {
             this.files.unshift({fileIconType: fileIconType, name: file.name, fuploading: true, fdownloading: false})
           }
 
-          const uploader = new Uploader({ filePath: file.path }, { pure: false })
+          const convergence = localStorage.getItem('convergence')
+          const uploader = new Uploader({ filePath: file.path, convergence: convergence }, { pure: false })
 
           uploader.on('upload_complete', (uri) => {
             console.log('upload complete: ', uri)
@@ -267,15 +268,36 @@ export default {
       }
     },
 
-    handleDelete (id, name, size, uri) {
+    handleDelete (id, name, size, uri, index) {
       this.$confirm('This will permanently delete the file. Continue?', 'Confirm', {
         confirmButtonText: 'OK',
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
-        this.$message({
-          type: 'success',
-          message: 'Delete completed'
+        const util = new Utils({
+          convergence: localStorage.getItem('convergence'),
+          uri: uri
+        })
+        util.remove((err, data) => {
+          if (err) {
+            console.log({err})
+            this.$message({
+              type: 'error',
+              message: 'Delete unsuccessful. Please try again.'
+            })
+          } else {
+            dbRemove(id, (err, res) => {
+              if (!err) {
+                console.log(res)
+                this.files.splice(index, 1)
+                this.$message({
+                  type: 'success',
+                  message: 'Delete successful'
+                })
+                this.$root.$emit('removedFile', size * 3)
+              }
+            })
+          }
         })
       }).catch(() => {
         this.$message({

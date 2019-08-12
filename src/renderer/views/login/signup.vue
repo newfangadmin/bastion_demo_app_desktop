@@ -48,6 +48,7 @@
 </template>
 
 <script>
+const Uploader = require('../../../../node_modules/newfang/newfang_uploader').default
 
 export default {
   components: {
@@ -84,6 +85,7 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           this.loading = true
+          const conv = Uploader.generate_convergence()
           var newuser = {
             firstName: this.ruleForm.first,
             lastName: this.ruleForm.last,
@@ -93,7 +95,8 @@ export default {
             storageCap: 1000000000,
             bandwidthCap: 1000000000,
             sUsage: 0,
-            bUsage: 0
+            bUsage: 0,
+            convergence: conv
           }
           const self = this
           this.$udb.insert(newuser, function (err, newDoc) {

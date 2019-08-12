@@ -81,6 +81,7 @@ export default {
               if (docs.length > 0) {
                 if (docs[0].pass === self.ruleForm.pass) {
                   localStorage.setItem('uid', docs[0]._id)
+                  localStorage.setItem('convergence', docs[0].convergence)
                   self.$db.find({ uid: docs[0]._id, type: 'folder', parentId: 'null' }, function (err, docs1) {
                     if (!err) {
                       localStorage.setItem('curFolderId', docs1[0]._id)
