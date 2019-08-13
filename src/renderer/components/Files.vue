@@ -194,7 +194,7 @@ export default {
                 this.$refs.fileSelect.value = ''
               }
             })
-            this.$root.$emit('uploadedFile', file.size * 3)
+            this.$root.$emit('uploadedFile', file.size * (3 / 2))
           })
 
           uploader.on('error', (e) => {
@@ -294,7 +294,7 @@ export default {
                   type: 'success',
                   message: 'Delete successful'
                 })
-                this.$root.$emit('removedFile', size * 3)
+                this.$root.$emit('removedFile', size * (3 / 2))
               }
             })
           }
