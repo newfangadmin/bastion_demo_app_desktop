@@ -55,6 +55,7 @@ export default {
       this.$db.find({ _id: id, uid: localStorage.getItem('uid'), type: 'folder' }, function (err, docs) {
         if (!err) {
           const parentCrumbId = docs[0].parentId
+          localStorage.setItem('curParent', parentCrumbId)
           self.$router.push({name: 'Home', params: {fid: id, parentId: parentCrumbId}})
         }
       })

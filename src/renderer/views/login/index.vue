@@ -86,6 +86,7 @@ export default {
                     if (!err) {
                       localStorage.setItem('curFolderId', docs1[0]._id)
                       localStorage.setItem('curFolderName', docs1[0].name)
+                      localStorage.setItem('curParent', 'null')
                       self.$router.push({name: 'Home', params: {fid: docs1[0]._id, parentId: 'null'}})
                     }
                   })

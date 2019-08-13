@@ -94,6 +94,7 @@ export default {
 
     handleClick (key, name) {
       if (!this.working) {
+        localStorage.setItem('curParent', this.curFolderId)
         this.$router.push({name: 'Home', params: {fid: key, parentId: this.curFolderId}})
       } else {
         this.showMsgBox('error', 'Upload/Download in progress. Please wait.')
@@ -132,7 +133,18 @@ export default {
 
     handleBack () {
       if (!this.working) {
-        this.$router.go(-1)
+        const id = localStorage.getItem('curParent')
+        const params = { _id: id, uid: localStorage.getItem('uid'), type: 'folder' }
+        console.log(params)
+        const sort = null
+        dbFetch(params, sort, (err, res) => {
+          if (!err) {
+            console.log(res)
+            const parentCrumbId = res[0].parentId
+            localStorage.setItem('curParent', parentCrumbId)
+            this.$router.push({name: 'Home', params: {fid: id, parentId: parentCrumbId}})
+          }
+        })
       } else {
         this.showMsgBox('error', 'Upload/Download in progress. Please wait.')
       }

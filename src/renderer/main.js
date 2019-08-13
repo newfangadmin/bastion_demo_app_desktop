@@ -11,8 +11,6 @@ import ElementUI from 'element-ui'
 import userDB from './userData'
 import fileDB from './fileData'
 
-// import dbMixin from './dbMixin'
-
 Vue.use(ElementUI)
 
 Vue.use(require('vue-moment'))

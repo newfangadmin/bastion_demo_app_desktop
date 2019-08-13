@@ -47,6 +47,7 @@ import { dbFetch, dbInsert, dbRemove } from '../api/db'
 const Uploader = require('../../../node_modules/newfang/newfang_uploader').default
 const Downloader = require('../../../node_modules/newfang/newfang_downloader').default
 const Utils = require('../../../node_modules/newfang/newfang_utils').default
+const path = require('path')
 
 export default {
   components: {
@@ -227,6 +228,7 @@ export default {
             cancelButtonText: 'Cancel',
             dangerouslyUseHTMLString: true
           }).then(() => {
+            this.downPercentage = 0
             this.downloading = true
             this.$root.$emit('working')
             const { dialog } = require('electron').remote
@@ -234,7 +236,9 @@ export default {
               defaultPath: name
             })
 
-            const savePath = res.split('/').slice(0, -1).join('/')
+            console.log('sp', res)
+
+            const savePath = path.dirname(res)
             this.files[index].fdownloading = true
 
             const downloader = new Downloader(String(uri), {
@@ -251,14 +255,14 @@ export default {
             downloader.on('download_complete', () => {
               console.log('download complete')
               this.files[index].fdownloading = false
-              this.downPercentage = 0
               this.$root.$emit('downloadedFile', size)
               this.showMsgBox('success', 'Successfully downloaded file - ' + name)
               this.downloading = false
               this.$root.$emit('idle')
             })
 
-            downloader.download(String(name))
+            const saveFileName = path.basename(res)
+            downloader.download(String(saveFileName))
           }).catch(() => {
             this.showMsgBox('info', 'File Download cancelled')
             this.downloading = false
