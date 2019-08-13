@@ -60,6 +60,14 @@ export default {
   computed: {
   },
   methods: {
+    validFolderLength (value) {
+      if (value.length > 20) {
+        return 'Folder Name cannot exceed 20 characters.'
+      } else {
+        return true
+      }
+    },
+
     showMsgBox (type, message) {
       this.$message({
         type: type,
@@ -96,7 +104,10 @@ export default {
       if (!this.working) {
         this.$prompt('Please enter the Folder Name', 'Add Folder', {
           confirmButtonText: 'Add',
-          cancelButtonText: 'Cancel'
+          cancelButtonText: 'Cancel',
+          inputPattern: /^(\w+\.?)*\w+$/,
+          inputValidator: this.validFolderLength,
+          inputErrorMessage: 'Invalid Folder Name'
         }).then(({ value }) => {
           var newFolder = {
             name: value,

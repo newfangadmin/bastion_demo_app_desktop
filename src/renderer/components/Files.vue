@@ -161,6 +161,7 @@ export default {
 
           const convergence = localStorage.getItem('convergence')
           const uploader = new Uploader({ filePath: file.path, convergence: convergence }, { pure: false })
+          const uploadParams = uploader.get_encoding_params()
 
           uploader.on('upload_complete', (uri) => {
             console.log('upload complete: ', uri)
@@ -194,7 +195,7 @@ export default {
                 this.$refs.fileSelect.value = ''
               }
             })
-            this.$root.$emit('uploadedFile', file.size * (3 / 2))
+            this.$root.$emit('uploadedFile', file.size * (uploadParams.n / uploadParams.k))
           })
 
           uploader.on('error', (e) => {
@@ -274,8 +275,14 @@ export default {
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
+        const convergence = localStorage.getItem('convergence')
+        const uploadParams = {
+          k: uri.split(':')[4],
+          n: uri.split(':')[5]
+        }
+
         const util = new Utils({
-          convergence: localStorage.getItem('convergence'),
+          convergence: convergence,
           uri: uri
         })
         util.remove((err, data) => {
@@ -294,7 +301,7 @@ export default {
                   type: 'success',
                   message: 'Delete successful'
                 })
-                this.$root.$emit('removedFile', size * (3 / 2))
+                this.$root.$emit('removedFile', size * (uploadParams.n / uploadParams.k))
               }
             })
           }

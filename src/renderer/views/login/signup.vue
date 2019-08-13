@@ -9,27 +9,17 @@
       </el-col>
       <el-col :span="6" :offset="9" class="formContainer">
         <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" class="demo-ruleForm">
-          <el-form-item
-            prop="first"
-            :rules="[
-              { required: true, message: 'Please input first name', trigger: 'blur' }
-            ]"
-          >
+          <el-form-item prop="first">
             <el-input type="text" placeholder="First Name" v-model="ruleForm.first" autocomplete="off"></el-input>
           </el-form-item>
-          <el-form-item
-            prop="last"
-            :rules="[
-              { required: true, message: 'Please input last name', trigger: 'blur' }
-            ]"
-          >
+          <el-form-item prop="last">
             <el-input type="text" placeholder="Last Name" v-model="ruleForm.last" autocomplete="off"></el-input>
           </el-form-item>
           <el-form-item
             prop="email"
             :rules="[
               { required: true, message: 'Please input email address', trigger: 'blur' },
-              { type: 'email', message: 'Please input correct email address', trigger: ['blur', 'change'] }
+              { type: 'email', message: 'Please input a valid email address', trigger: ['blur', 'change'] }
             ]"
           >
             <el-input placeholder="Email" v-model="ruleForm.email"></el-input>
@@ -56,9 +46,17 @@ export default {
   data () {
     var validatePass = (rule, value, callback) => {
       if (value === '') {
-        callback(new Error('Please input the password'))
+        callback(new Error('Please enter the password'))
       } else if (value !== this.ruleForm.pass) {
-        callback(new Error('Two inputs don\'t match!'))
+        callback(new Error('Password Mismatch'))
+      } else {
+        callback()
+      }
+    }
+    var validateName = (rule, value, callback) => {
+      console.log('val', value)
+      if (value.trim() === '') {
+        callback(new Error('Please enter a value'))
       } else {
         callback()
       }
@@ -73,6 +71,14 @@ export default {
       rules: {
         pass: [
           { validator: validatePass, trigger: 'blur' }
+        ],
+        first: [
+          { validator: validateName, trigger: 'blur' },
+          { max: 20, message: 'Length should not exceed 20 characters', trigger: 'blur' }
+        ],
+        last: [
+          { validator: validateName, trigger: 'blur' },
+          { max: 20, message: 'Length should not exceed 20 characters', trigger: 'blur' }
         ]
       },
       loading: false
