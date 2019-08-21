@@ -72,7 +72,8 @@ export default {
       api: null,
       userAPI: null,
       adminAPI: null,
-      nodes: ['newfangnode1', 'newfangnode2', 'newfangnode3']
+      nodes: ['newfangnode1', 'newfangnode2', 'newfangnode3'],
+      fworking: false
     }
   },
   filters: {
@@ -132,10 +133,10 @@ export default {
     },
 
     handleFileBtnClick () {
-      if (!this.uploading && !this.downloading) {
+      if (!this.uploading && !this.downloading && !this.fworking) {
         this.$refs.fileSelect.click()
       } else {
-        this.showMsgBox('error', 'Upload/Download in progress. Please wait.')
+        this.showMsgBox('error', 'Work in progress. Please wait.')
       }
     },
 
@@ -213,13 +214,12 @@ export default {
           uploader.start_upload()
         }
       } else {
-        console.log('cancelled')
         this.showMsgBox('info', 'File upload aborted')
       }
     },
 
     handleFileDownload (id, name, size, uri, index) {
-      if (!this.downloading && !this.uploading) {
+      if (!this.downloading && !this.uploading && !this.fworking) {
         if ((Number(size) + Number(localStorage.getItem('bUsage'))) > localStorage.getItem('bCap')) {
           this.showMsgBox('error', 'Download file size cannot exceed your Bandwidth Cap(' + localStorage.getItem('bCap') / 1000000000 + 'GB)')
         } else {
@@ -235,8 +235,6 @@ export default {
             const res = dialog.showSaveDialog({
               defaultPath: name
             })
-
-            console.log('sp', res)
 
             const savePath = path.dirname(res)
             this.files[index].fdownloading = true
@@ -269,53 +267,55 @@ export default {
           })
         }
       } else {
-        this.showMsgBox('error', 'Upload/Download in progress. Please wait.')
+        this.showMsgBox('error', 'Work in progress. Please wait.')
       }
     },
 
     handleDelete (id, name, size, uri, index) {
-      this.$confirm('This will permanently delete the file. Continue?', 'Confirm', {
-        confirmButtonText: 'OK',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }).then(() => {
-        const convergence = localStorage.getItem('convergence')
-        const uploadParams = {
-          k: uri.split(':')[4],
-          n: uri.split(':')[5]
-        }
-
-        const util = new Utils({
-          convergence: convergence,
-          uri: uri
-        })
-        util.remove((err, data) => {
-          if (err) {
-            console.log({err})
-            this.$message({
-              type: 'error',
-              message: 'Delete unsuccessful. Please try again.'
-            })
-          } else {
-            dbRemove(id, (err, res) => {
-              if (!err) {
-                console.log(res)
-                this.files.splice(index, 1)
-                this.$message({
-                  type: 'success',
-                  message: 'Delete successful'
-                })
-                this.$root.$emit('removedFile', size * (uploadParams.n / uploadParams.k))
-              }
-            })
+      if (!this.downloading && !this.uploading && !this.fworking) {
+        this.$confirm('This will permanently delete the file. Continue?', 'Confirm', {
+          confirmButtonText: 'OK',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        }).then(() => {
+          const convergence = localStorage.getItem('convergence')
+          const uploadParams = {
+            k: uri.split(':')[4],
+            n: uri.split(':')[5]
           }
+
+          const util = new Utils({
+            convergence: convergence,
+            uri: uri
+          })
+          util.remove((err, data) => {
+            if (err) {
+              this.$message({
+                type: 'error',
+                message: 'Delete unsuccessful. Please try again.'
+              })
+            } else {
+              dbRemove(id, (err, res) => {
+                if (!err) {
+                  this.files.splice(index, 1)
+                  this.$message({
+                    type: 'success',
+                    message: 'Delete successful'
+                  })
+                  this.$root.$emit('removedFile', size * (uploadParams.n / uploadParams.k))
+                }
+              })
+            }
+          })
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: 'Delete cancelled'
+          })
         })
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: 'Delete canceled'
-        })
-      })
+      } else {
+        this.showMsgBox('error', 'Work in progress. Please wait.')
+      }
     },
 
     makeReqId (length) {
@@ -332,6 +332,12 @@ export default {
     this.uid = localStorage.getItem('uid')
     this.curFolder = this.$route.params.fid
     this.getFiles()
+    this.$root.$on('fworking', () => {
+      this.fworking = true
+    })
+    this.$root.$on('fidle', () => {
+      this.fworking = false
+    })
   }
 }
 </script>

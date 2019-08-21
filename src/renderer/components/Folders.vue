@@ -19,10 +19,10 @@
       </el-col>
       <div v-if="!noFolders">
         <transition-group name="fade-transform">
-        <el-col :xs="8" :sm="8" :md="6" :lg="4" :xl="4" v-for="folder in folders" :key="folder._id" style="outline: none;" class="cardContainer">
+        <el-col :xs="8" :sm="8" :md="6" :lg="4" :xl="4" v-for="(folder, index) in folders" :key="folder._id" style="outline: none;" class="cardContainer">
           <el-card :body-style="{ padding: '0px' }" class="folderOptions" shadow="never">
             <el-col :span="15" style="padding-top: 8px; text-align: left">{{ folder.addDate | moment("Do MMM YY") }}</el-col>
-            <el-col :span="9"><el-button @click="handleDelete(folder._id)" class="secondaryBtn" style="padding: 0px; padding-top: 9px; font-size: 12px;" icon="el-icon-delete">Delete</el-button></el-col>
+            <el-col :span="9"><el-button @click="handleDelete(folder._id, folder.name, index)" class="secondaryBtn" style="padding: 0px; padding-top: 9px; font-size: 12px;" icon="el-icon-delete">Delete</el-button></el-col>
           </el-card>
           <el-card :body-style="{ padding: '0px' }" @click.native="handleClick(folder._id, folder.name)">
             <el-col :span="5" class="iconContainer">
@@ -40,7 +40,8 @@
 </template>
 
 <script>
-import { dbFetch, dbInsert } from '../api/db'
+import { dbFetch, dbInsert, dbRemove } from '../api/db'
+const Utils = require('../../../node_modules/newfang/newfang_utils').default
 
 export default {
   components: {
@@ -54,7 +55,9 @@ export default {
       curFolderId: '',
       parentFolderId: '',
       nullParent: true,
-      working: false
+      working: false,
+      folderDelArr: [],
+      fileDelArr: []
     }
   },
   computed: {
@@ -135,11 +138,9 @@ export default {
       if (!this.working) {
         const id = localStorage.getItem('curParent')
         const params = { _id: id, uid: localStorage.getItem('uid'), type: 'folder' }
-        console.log(params)
         const sort = null
         dbFetch(params, sort, (err, res) => {
           if (!err) {
-            console.log(res)
             const parentCrumbId = res[0].parentId
             localStorage.setItem('curParent', parentCrumbId)
             this.$router.push({name: 'Home', params: {fid: id, parentId: parentCrumbId}})
@@ -148,7 +149,134 @@ export default {
       } else {
         this.showMsgBox('error', 'Upload/Download in progress. Please wait.')
       }
+    },
+
+    async handleDelete (folderId, folderName, index) {
+      this.loading = true
+      this.$root.$emit('fworking')
+      this.folderDelArr = []
+      this.fileDelArr = []
+      const uid = localStorage.getItem('uid')
+      await this.getFolderDelArray(folderId, uid)
+      this.folderDelArr.push({
+        id: folderId,
+        name: folderName
+      })
+      const folderCount = this.folderDelArr.length
+      const fileCount = this.fileDelArr.length
+      var totalFileSize = 0
+      this.fileDelArr.forEach(file => {
+        totalFileSize += file.size
+      })
+      var nVal = 0
+      var kVal = 1
+      if (this.fileDelArr.length > 0) {
+        nVal = this.fileDelArr[0].uri.split(':')[5]
+        kVal = this.fileDelArr[0].uri.split(':')[4]
+      }
+      this.$confirm('You are about to delete:<br/><strong>' + folderCount + ' Folders</strong><br/><strong>' + fileCount + ' Files</strong><br/>Freeing up <strong>' + (totalFileSize / 1000000 * (nVal / kVal)).toFixed(2) + ' MB</strong>', 'Confirm Delete', {
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel',
+        dangerouslyUseHTMLString: true
+      }).then(() => {
+        const convergence = localStorage.getItem('convergence')
+        var uploadParams
+        this.fileDelArr.forEach(file => {
+          uploadParams = {
+            k: file.uri.split(':')[4],
+            n: file.uri.split(':')[5]
+          }
+
+          const util = new Utils({
+            convergence: convergence,
+            uri: file.uri
+          })
+          util.remove((err, data) => {
+            if (err) {
+              this.$message({
+                type: 'error',
+                message: 'Delete unsuccessful. Please try again.'
+              })
+            } else {
+              dbRemove(file.id, (err, res) => {
+                if (!err) {
+                  this.$message({
+                    type: 'success',
+                    message: 'Delete successful'
+                  })
+                } else {
+                  console.log({err})
+                }
+              })
+            }
+          })
+        })
+        this.$root.$emit('removedFile', totalFileSize * (uploadParams.n / uploadParams.k))
+        this.folderDelArr.forEach(folder => {
+          dbRemove(folder.id, (err, res) => {
+            if (err) {
+              console.log(err)
+            } else {
+              this.folders.splice(index, 1)
+            }
+          })
+        })
+        this.loading = false
+        this.$root.$emit('fidle')
+      }).catch(() => {
+        this.loading = false
+        this.$root.$emit('fidle')
+      })
+    },
+
+    getFolderDelArray (id, uid) {
+      return new Promise(async (resolve, reject) => {
+        await this.getFileDelArr(id, uid)
+        const params = { parentId: id, uid: uid, type: 'folder' }
+        const sort = null
+        dbFetch(params, sort, async (err, res) => {
+          if (!err) {
+            if (res.length > 0) {
+              for (var i = 0; i < res.length; i++) {
+                this.folderDelArr.push({
+                  id: res[i]._id,
+                  name: res[i].name
+                })
+                await this.getFolderDelArray(res[i]._id, uid)
+              }
+            }
+            resolve()
+          } else {
+            reject(err)
+          }
+        })
+      })
+    },
+
+    getFileDelArr (folderId, uid) {
+      return new Promise((resolve, reject) => {
+        const params = { parentId: folderId, uid: uid, type: 'file' }
+        const sort = null
+        dbFetch(params, sort, (err, res) => {
+          if (!err) {
+            if (res.length > 0) {
+              for (var i = 0; i < res.length; i++) {
+                this.fileDelArr.push({
+                  id: res[i]._id,
+                  name: res[i].name,
+                  uri: res[i].uri,
+                  size: res[i].size
+                })
+              }
+            }
+            resolve()
+          } else {
+            reject(err)
+          }
+        })
+      })
     }
+
   },
   mounted () {
     this.uid = localStorage.getItem('uid')

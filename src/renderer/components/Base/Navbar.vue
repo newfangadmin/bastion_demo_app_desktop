@@ -32,10 +32,11 @@
           <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
             <avatar :username="uname" :size="32" background-color="#222" color="#00a8ff" />
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item>
+              <!-- <el-dropdown-item>
                 <span style="display:block;" @click="deleteAccount()"><i class="el-icon-delete"></i>Delete Account</span>
-              </el-dropdown-item>              
-              <el-dropdown-item divided>
+              </el-dropdown-item> -->
+              <!-- <el-dropdown-item divided> -->
+              <el-dropdown-item>
                 <span style="display:block;" @click="logout"><i class="el-icon-switch-button"></i>Logout</span>
               </el-dropdown-item>
             </el-dropdown-menu>
@@ -84,6 +85,8 @@ export default {
           self.sUsage = Number(parseFloat(newUsage).toFixed(1))
           self.sPercent = Number(parseFloat((self.sUsage / self.sCap) * 100).toFixed(1))
           localStorage.setItem('sUsage', self.sUsage)
+        } else {
+          console.log(err)
         }
       })
     },

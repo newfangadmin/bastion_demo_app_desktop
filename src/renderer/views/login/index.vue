@@ -6,7 +6,7 @@
       </el-col>
       <el-col :span="6" :offset="9" class="signupBtnContainer">
         <el-row v-if="!accountLimitReached">New to Bastion?<span class="signupBtn"><el-button @click="handleSignup()" class="secondaryBtn">SignUp</el-button></span></el-row>
-        <el-row v-else>You have reached your 2 user account limit per device. Delete an account to create a new one.</el-row>
+        <el-row v-else>You have reached your 2 user account limit per device.</el-row>
       </el-col>
       <el-col :span="6" :offset="9" class="formContainer">
         <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" class="demo-ruleForm">
@@ -143,7 +143,6 @@ export default {
                 duration: 5000
               })
             } else {
-              console.log(docs)
               self.$alert('Password for this user is - <strong>' + docs[0].pass + '</strong>', 'Password', {
                 confirmButtonText: 'Copy',
                 dangerouslyUseHTMLString: true,

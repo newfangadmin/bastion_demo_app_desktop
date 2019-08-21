@@ -54,7 +54,6 @@ export default {
       }
     }
     var validateName = (rule, value, callback) => {
-      console.log('val', value)
       if (value.trim() === '') {
         callback(new Error('Please enter a value'))
       } else {
