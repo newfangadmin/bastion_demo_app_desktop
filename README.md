@@ -1,4 +1,4 @@
-# bastion_demo_app_desktop
+# Bastion
 
 > A dropbox clone demo desktop application to showcase the Newfang Desktop SDK
 
