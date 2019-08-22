@@ -6,7 +6,7 @@
         <el-button class="backBtn smBtn" v-if="!nullParent" icon="el-icon-back" @click="handleBack()">BACK</el-button>
       </el-col>
     </el-row>
-    <el-row :gutter="20" class="foldersContainer">
+    <el-row :gutter="10" class="foldersContainer">
       <el-col :xs="8" :sm="8" :md="6" :lg="4" :xl="4" style="outline: none; margin-top: 18px;">
         <el-card class="newFolderBtn" :body-style="{ padding: '0px' }" shadow="hover" @click.native="handleAddFolder()">
           <el-col :span="5" class="iconContainer">

@@ -3,7 +3,7 @@
     <el-row>
       <el-col :span="4" style="padding-top: 12px;"><div class="filesHeading">Files</div></el-col>
     </el-row>
-    <el-row :gutter="20" class="filesContainer">
+    <el-row :gutter="10" class="filesContainer">
       <el-col :xs="8" :sm="8" :md="6" :lg="4" :xl="4" style="outline: none; margin-top: 18px;">
         <input type="file" ref="fileSelect" style="display: none" v-on:change="handleFileUpload()">
         <el-card class="newFileBtn" :body-style="{ padding: '0px' }" shadow="hover" @click.native="handleFileBtnClick()">
