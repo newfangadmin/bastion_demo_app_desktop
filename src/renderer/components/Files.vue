@@ -286,7 +286,8 @@ export default {
 
           const util = new Utils({
             convergence: convergence,
-            uri: uri
+            uri: uri,
+            pure: false
           })
           util.remove((err, data) => {
             if (err) {
