@@ -241,7 +241,7 @@ export default {
 
             const downloader = new Downloader(String(uri), {
               downloadPath: savePath,
-              type: 'Stream',
+              type: 'stream',
               pure: false
             })
 
@@ -260,7 +260,7 @@ export default {
             })
 
             const saveFileName = path.basename(res)
-            downloader.download(String(saveFileName))
+            downloader.start_download(String(saveFileName))
           }).catch(() => {
             this.showMsgBox('info', 'File Download cancelled')
             this.downloading = false
@@ -289,7 +289,7 @@ export default {
             uri: uri,
             pure: false
           })
-          util.remove((err, data) => {
+          util.start_delete((err, data) => {
             if (err) {
               this.$message({
                 type: 'error',
@@ -308,7 +308,8 @@ export default {
               })
             }
           })
-        }).catch(() => {
+        }).catch((e) => {
+          console.log(e)
           this.$message({
             type: 'info',
             message: 'Delete cancelled'
