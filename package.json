@@ -53,7 +53,7 @@
     }
   },
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "element-ui": "^2.9.2",
     "eosjs": "^20.0.0",
     "file-icon-vectors": "^1.0.0",
